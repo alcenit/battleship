@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+<HBox fx:id="contenedorPrincipal" 
+      spacing="20" 
+      xmlns="http://javafx.com/javafx/11.0.1" 
+      xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.cenit.battleship.view.PlacementViewController">
+   <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+   
+   <!-- Panel izquierdo: Tablero -->
+   <VBox spacing="15" prefWidth="500">
+      <Label text="Tu Tablero" styleClass="title-label"/>
+      <GridPane fx:id="tableroJugador" hgap="2" vgap="2"/>
+      
+      <HBox spacing="10" alignment="CENTER">
+         <Button fx:id="btnRotar" text="Horizontal" prefWidth="100"/>
+         <Button fx:id="btnAleatorio" text="Aleatorio" prefWidth="100"/>
+         <Button fx:id="btnComenzar" text="Comenzar" prefWidth="100" disable="true"/>
+      </HBox>
+      
+      <Label fx:id="lblInstrucciones" text="Coloca tus barcos" styleClass="instruction-label"/>
+   </VBox>
+   
+   <!-- Panel derecho: Barcos -->
+   <VBox fx:id="panelBarcos" spacing="10" prefWidth="300">
+      <Label text="Tu Flota" styleClass="title-label"/>
+      <!-- Los barcos se cargan dinámicamente -->
+   </VBox>
+   
+   <stylesheets>
+        <URL value="@/com/cenit/battleship/styles/placementview.css"/>
+    </stylesheets>
+   
+   
+   
+   
+</HBox>   
+
+
+    
+

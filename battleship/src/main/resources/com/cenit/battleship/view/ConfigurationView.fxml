@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+
+<VBox spacing="20" xmlns="http://javafx.com/javafx/11.0.1" 
+      xmlns:fx="http://javafx.com/fxml/1" 
+      fx:controller="com.cenit.battleship.view.ConfigurationViewController">
+   <padding><Insets top="20" right="20" bottom="20" left="20"/></padding>
+   
+   <Label text="CONFIGURACIÓN" styleClass="title-label"/>
+   
+   <VBox spacing="15" styleClass="config-section">
+      <Label text="Jugador" styleClass="section-title"/>
+      <HBox spacing="10" alignment="CENTER_LEFT">
+         <Label text="Nombre:" prefWidth="100"/>
+         <TextField fx:id="txtNombre" prefWidth="200" promptText="Ingresa tu nombre"/>
+      </HBox>
+   </VBox>
+   
+   <VBox spacing="15" styleClass="config-section">
+      <Label text="Dificultad" styleClass="section-title"/>
+      <HBox spacing="10" alignment="CENTER_LEFT">
+         <Label text="Nivel:" prefWidth="100"/>
+         <ComboBox fx:id="comboDificultad" prefWidth="200"/>
+      </HBox>
+   </VBox>
+   
+   <VBox spacing="15" styleClass="config-section">
+      <Label text="Audio" styleClass="section-title"/>
+      <VBox spacing="10">
+         <CheckBox fx:id="checkSonido" text="Habilitar sonido" selected="true"/>
+         <VBox spacing="5">
+            <Label fx:id="lblVolumen" text="Volumen: 80%"/>
+            <Slider fx:id="sliderVolumen" min="0" max="100" value="80" showTickLabels="true" showTickMarks="true" majorTickUnit="25"/>
+         </VBox>
+      </VBox>
+   </VBox>
+   
+   <VBox spacing="15" styleClass="config-section">
+      <Label text="Visual" styleClass="section-title"/>
+      <VBox spacing="10">
+         <CheckBox fx:id="checkAnimaciones" text="Habilitar animaciones" selected="true"/>
+         <VBox spacing="5">
+            <Label fx:id="lblVelocidad" text="Velocidad: 100%"/>
+            <Slider fx:id="sliderVelocidad" min="50" max="200" value="100" showTickLabels="true" showTickMarks="true" majorTickUnit="50"/>
+         </VBox>
+         <HBox spacing="10" alignment="CENTER_LEFT">
+            <Label text="Tema:" prefWidth="100"/>
+            <ComboBox fx:id="comboTema" prefWidth="150"/>
+         </HBox>
+         <CheckBox fx:id="checkAyudas" text="Mostrar ayudas visuales" selected="true"/>
+      </VBox>
+   </VBox>
+   
+   <HBox spacing="20" alignment="CENTER">
+      <Button fx:id="btnGuardar" text="Guardar" styleClass="btn-primary" prefWidth="100"/>
+      <Button fx:id="btnCancelar" text="Cancelar" styleClass="btn-secondary" prefWidth="100"/>
+      <Button fx:id="btnPredeterminado" text="Predeterminado" styleClass="btn-secondary" prefWidth="120"/>
+   </HBox>
+   
+   <stylesheets>
+        <URL value="@/com/cenit/battleship/styles/mainview.css"/>
+    </stylesheets>
+</VBox>
+    
+

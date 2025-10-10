@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import java.lang.*?>
+<?import java.net.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<?import javafx.geometry.Insets?>
+
+
+ <VBox fx:id="mainContainer" 
+       alignment="CENTER" 
+       spacing="20" 
+       xmlns="http://javafx.com/javafx/11.0.1" 
+       xmlns:fx="http://javafx.com/fxml/1" 
+       fx:controller="com.cenit.battleship.view.MainViewController">
+   <padding><Insets top="50" right="50" bottom="50" left="50"/></padding>
+   
+   <Label fx:id="lblTitulo" text="BATTLESHIP" styleClass="title-label">
+      <font>
+         <Font name="Arial Black" size="48.0" />
+      </font>
+   </Label>
+   
+   <VBox alignment="CENTER" spacing="15">
+      <Label text="Modo de Juego:" styleClass="subtitle-label"/>
+      <ComboBox fx:id="comboModoJuego" prefWidth="200"/>
+   </VBox>
+   
+   <VBox alignment="CENTER" spacing="10">
+      <Button fx:id="btnNuevoJuego" text="Nuevo Juego" prefWidth="200" prefHeight="40"/>
+      <Button fx:id="btnContinuar" text="Continuar" prefWidth="200" prefHeight="40"/>
+      <Button fx:id="btnConfiguracion" text="Configuración" prefWidth="200" prefHeight="40"/>
+      <Button fx:id="btnSalir" text="Salir" prefWidth="200" prefHeight="40"/>
+   </VBox>
+   
+  <stylesheets>
+        <URL value="@/com/cenit/battleship/styles/mainview.css"/>
+    </stylesheets> 
+   
+   
+   
+</VBox>   
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+
