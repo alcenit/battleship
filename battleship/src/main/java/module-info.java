@@ -12,5 +12,6 @@ module com.cenit.battleship {
     exports com.cenit.battleship;
     exports com.cenit.battleship.view;
     exports com.cenit.battleship.controller;
+    requires com.google.gson;
 }
 

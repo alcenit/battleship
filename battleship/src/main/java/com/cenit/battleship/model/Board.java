@@ -38,7 +38,7 @@ public class Board {
         return getCell(coord.x(), coord.y());
     }
     
-    public int getTamaño() { return SIZE; }
+    public int getSize() { return SIZE; }
     
     // Comportamiento específico
     public boolean isCoordinateValid(int x, int y) {

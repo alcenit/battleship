@@ -23,7 +23,7 @@ public class SoundController {
     private Configuration config;
     private boolean loadedSounds;
 
-    private SoundController() {
+    public SoundController() {
         this.config = Configuration.getInstance();
         this.soundEfects = new HashMap<>();
         this.loadedSounds = false;
@@ -188,7 +188,7 @@ public class SoundController {
 
     // ========== CONTROL DE ESTADO ==========
 
-    public void reiniciar() {
+    public void reboot() {
         stopMusicBackground();
         if (config.isSoundEnabled()) {
             startMusicBackground();

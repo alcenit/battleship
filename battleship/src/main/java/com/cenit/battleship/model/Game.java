@@ -4,7 +4,7 @@
  */
 package com.cenit.battleship.model;
 
-import com.cenit.battleship.model.enums.GameState;
+import com.cenit.battleship.model.enums.GamePhase;
 
 /**
  *
@@ -15,24 +15,24 @@ public class Game {
     private final Board boardPlayer;
     private final Board boardCPU;
     private boolean playerTurn;
-    private GameState state;
+    private GamePhase state;
     
     public Game() {
         this.boardPlayer = new Board();
         this.boardCPU = new Board();
         this.playerTurn = true;
-        this.state = GameState.PLACING_SHIPS;
+        this.state = GamePhase.SHIP_PLACEMENT;
     }
     
     // Getters
     public Board getBoardPlayer() { return boardPlayer; }
     public Board getBoardCPU() { return boardCPU; }
     public boolean isPlayerTurn() { return playerTurn; }
-    public GameState getState() { return state; }
+    public GamePhase getState() { return state; }
     
     // Comportamiento del juego
     public ShotResult playerShot(Coordinate coord) {
-        if (!playerTurn || state != GameState.IN_PLAY) {
+        if (!playerTurn || state != GamePhase.IN_PLAY) {
             throw new IllegalStateException("No es el turno del jugador");
         }
         
@@ -47,7 +47,7 @@ public class Game {
     }
     
     public void startGame() {
-        this.state = GameState.IN_PLAY;
+        this.state = GamePhase.IN_PLAY;
         this.playerTurn = true;
     }
     
@@ -55,7 +55,7 @@ public class Game {
         boardPlayer.reset();
         boardCPU.reset();
         this.playerTurn = true;
-        this.state = GameState.PLACING_SHIPS;
+        this.state = GamePhase.SHIP_PLACEMENT;
     }
     
     private void verifyEndGame() {

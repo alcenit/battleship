@@ -10,4 +10,14 @@ package com.cenit.battleship.controller;
  */
 public class AnimationController {
     
+   private static AnimationController instance;  
+    
+    
+    public static AnimationController getInstance() {
+        if (instance == null) {
+            instance = new AnimationController();
+        }
+        return instance;
+    }
+    
 }

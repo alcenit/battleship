@@ -44,7 +44,7 @@ public class Ship {
     
     // Getters
     public ShipType getType() { return type; }
-    public int getShotReceived() { return impactsReceived; }
+    public int getImpactsRecieved() { return impactsReceived; }
     
     // Comportamiento en lugar de getters que exponen estado interno
     public boolean isSunk() {

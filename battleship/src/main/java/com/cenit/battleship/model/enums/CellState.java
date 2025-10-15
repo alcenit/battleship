@@ -14,6 +14,6 @@ public enum CellState {
     SHIP,          // Casilla con barco intacto
     IMPACT,        // Disparo acertado
     FAIL,          // Disparo fallido
-    WATER_MARK    // Agua marcada (para modo difícil)
+    MARKED_WATER    // Agua marcada (para modo difícil)
    
 }

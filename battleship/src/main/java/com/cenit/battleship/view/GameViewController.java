@@ -5,38 +5,50 @@
 package com.cenit.battleship.view;
 
 import com.cenit.battleship.App;
+import com.cenit.battleship.controller.AnimationController;
 import com.cenit.battleship.controller.GameController;
+import com.cenit.battleship.controller.SoundController;
 import com.cenit.battleship.model.Board;
 import com.cenit.battleship.model.Cell;
 import com.cenit.battleship.model.Coordinate;
 import com.cenit.battleship.model.Ship;
 import com.cenit.battleship.model.ShotResult;
+import com.cenit.battleship.sevices.StorageService;
 import java.net.URL;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import javafx.animation.PauseTransition;
 import javafx.fxml.FXML;
+import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
+import javafx.scene.Parent;
+import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Label;
+import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
+import javafx.scene.control.TextInputDialog;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.stage.Modality;
+import javafx.stage.Stage;
 import javafx.util.Duration;
-
-/**
- *
- * @author Usuario
- */
 
 public class GameViewController implements Initializable {
     
+    private static GameController gameControllerStatic;    
+
     private GameController gameController;
-    private boolean activeGame = true;
+    private StorageService storageService;
+    public SoundController soundController;
+    private AnimationController animationController;  
+
+   private boolean activeGame = true;
     
     // Tablero del jugador
     @FXML 
@@ -49,7 +61,8 @@ public class GameViewController implements Initializable {
     private GridPane CPUBoard;
     @FXML 
     private Label lblCPUState;
-    
+    @FXML 
+    private Label lblSkillpoints;
     // Controles del juego
     @FXML 
     private Label lblTurn;
@@ -71,6 +84,18 @@ public class GameViewController implements Initializable {
     private VBox CPUInfoPanel;
     @FXML 
     private VBox panelSkills;
+
+    @FXML 
+    private MenuItem menuGuardar;
+    @FXML 
+    private MenuItem menuGuardarComo;
+    @FXML 
+    private MenuItem menuCargar; 
+    @FXML 
+    private MenuItem menuSalir;
+    
+    
+
     
     // Matrices de botones
     private Button[][] playerButtons = new Button[10][10];
@@ -78,11 +103,31 @@ public class GameViewController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        gameController = new GameController();
+         // Si tenemos un GameController estático (desde carga), usarlo
+        if (gameControllerStatic != null) {
+            this.gameController = gameControllerStatic;
+            gameControllerStatic = null; // Limpiar para futuras uses
+        } else {
+            // Si no, crear uno nuevo (juego normal)
+            this.gameController = new GameController();
+        }
+        
+        storageService = new StorageService();
+        soundController = SoundController.getInstance();
+        animationController = AnimationController.getInstance();
+        
         initializeInterface();
         configureEvents();
+        configurarMenu();        
         startGame();
+        
+        soundController.startMusicBackground();
+
+     
+        
+        
     }
+   
 
     private void initializeInterface() {
         initializeBoard(playerBoard, playerButtons, false);
@@ -121,6 +166,205 @@ public class GameViewController implements Initializable {
         updateBoardDisplay(buttons, isClickable ? 
             gameController.getCPUBoard() : gameController.getPlayerBoard());
     }
+    
+    
+    private void configurarMenu() {
+        menuGuardar.setOnAction(e -> guardarPartida());
+        menuGuardarComo.setOnAction(e -> guardarPartidaComo());
+        menuCargar.setOnAction(e -> cargarPartida());
+        menuSalir.setOnAction(e -> exitToMainMenu());
+    }
+
+/**
+     * Método estático para establecer el GameController antes de cargar la vista
+     * Esto se usa cuando cargamos una partida desde el menú principal
+     */
+public static void setGameController(GameController controller) {
+        gameControllerStatic = controller;
+    }
+
+    private void guardarPartida() {
+        if (storageService.guardarPartidaAutomatico(gameController)) {
+            showMessage("Partida guardada automáticamente");
+        } else {
+            showMessage("Error al guardar la partida");
+        }
+    }
+
+    private void guardarPartidaComo() {
+        TextInputDialog dialog = new TextInputDialog("mi_partida");
+        dialog.setTitle("Guardar Partida");
+        dialog.setHeaderText("Guardar partida como:");
+        dialog.setContentText("Nombre:");
+
+        Optional<String> result = dialog.showAndWait();
+        result.ifPresent(nombre -> {
+            if (storageService.guardarPartida(gameController, nombre)) {
+                showMessage("Partida guardada como: " + nombre);
+            } else {
+                showMessage("Error al guardar la partida");
+            }
+        });
+    }
+
+    private void cargarPartida() {
+        try {
+            // Mostrar diálogo de selección de partidas guardadas
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/GuardadosView.fxml"));
+            Parent root = loader.load();
+            
+            SavedViewController controller = loader.getController();
+            controller.setSaveGameListener(new SavedViewController.SaveGameListener() {
+                @Override
+                public void onPartidaCargada(String nombreArchivo) {
+                    // Cargar la partida seleccionada
+                    cargarPartidaSeleccionada(nombreArchivo);
+                }
+                
+                @Override
+                public void onDialogoCerrado() {
+                    // El usuario cerró el diálogo sin seleccionar
+                    System.out.println("Diálogo de carga cerrado");
+                }
+            });
+            
+            Stage stage = new Stage();
+            stage.setTitle("Cargar Partida Guardada");
+            stage.setScene(new Scene(root, 800, 500));
+            stage.initModality(Modality.APPLICATION_MODAL);
+            stage.initOwner(App.getPrimaryStage());
+            stage.showAndWait();
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showMessage("Error al cargar el diálogo de partidas guardadas");
+        }
+    }
+
+    private void cargarPartidaSeleccionada(String nombreArchivo) {
+        try {
+            // Mostrar confirmación antes de cargar
+            Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+            confirmacion.setTitle("Cargar Partida");
+            confirmacion.setHeaderText("¿Cargar partida: " + nombreArchivo + "?");
+            confirmacion.setContentText("El progreso actual se perderá si no está guardado.");
+            
+            confirmacion.showAndWait().ifPresent(response -> {
+                if (response == ButtonType.OK) {
+                    realizarCargaPartida(nombreArchivo);
+                }
+            });
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showMessage("Error al preparar la carga de partida");
+        }
+    }
+
+    private void realizarCargaPartida(String nombreArchivo) {
+        try {
+            // Cargar la partida desde el archivo
+            GameController nuevoGameController = storageService.loadGame(nombreArchivo);
+            
+            if (nuevoGameController != null) {
+                // Reemplazar el controlador actual
+                this.gameController = nuevoGameController;
+                
+                // Reinicializar la interfaz con el nuevo estado
+                resetInterface();
+                
+                showMessage("Partida cargada exitosamente: " + nombreArchivo);
+                soundController.playClickBoton();
+                
+            } else {
+                showMessage("Error: No se pudo cargar la partida seleccionada");
+                soundController.playError();
+            }
+            
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            showMessage("Error crítico al cargar la partida: " + ex.getMessage());
+            soundController.playError();
+        }
+    }
+
+    private void resetInterface() {
+        // Detener cualquier animación en curso
+        activeGame = false;
+        
+        // Actualizar ambos tableros
+        updateBoardDisplay(playerButtons, gameController.getPlayerBoard());
+        updateBoardDisplay(CPUButtons, gameController.getCPUBoard());
+        
+        // Actualizar paneles de información
+        updateInformationPanels();
+        
+        // Actualizar habilidades
+        updateSkills();
+        
+        // Actualizar estado del turno
+        updateTurnStatus();
+        
+        // Actualizar mensaje según el estado del juego
+        if (gameController.isGameFinished()) {
+            if (gameController.playerWin()) {
+                showMessage("¡Partida cargada - Victoria previa!");
+            } else {
+                showMessage("¡Partida cargada - Derrota previa!");
+            }
+        } else {
+            if (gameController.isPlayerTurn()) {
+                showMessage("Partida cargada - Tu turno");
+                disableCPUboard(false);
+            } else {
+                showMessage("Partida cargada - Turno de la CPU");
+                disableCPUboard(true);
+                // Opcional: ejecutar turno de la CPU automáticamente
+                runCPUTurn();
+            }
+        }
+        
+        // Reactivar el juego si no ha terminado
+        activeGame = !gameController.isGameFinished();
+        
+        // Actualizar puntos de habilidad en la UI
+        updateSkillPoints();
+    }
+
+    private void updateSkillPoints() {
+        int puntos = gameController.getPlayerSkills().getSkillPoints();
+        // Asumiendo que tienes un Label para mostrar puntos
+        if (lblSkillpoints != null) {
+            lblSkillpoints.setText("Puntos: " + puntos);
+        }
+    }
+
+    private void exitToMainMenu() {
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Salir al Menú Principal");
+        confirmacion.setHeaderText("¿Salir al menú principal?");
+        confirmacion.setContentText("El progreso no guardado se perderá.");
+        
+        confirmacion.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                try {
+                    App.changeView("view/MainView");
+                } catch (Exception ex) {
+                    ex.printStackTrace();
+                }
+            }
+        });
+    }
+
+    // Método auxiliar para mostrar mensajes
+    private void showMessage(String mensaje) {
+        if (lblMessage != null) {
+            lblMessage.setText(mensaje);
+        }
+        System.out.println("JuegoViewController: " + mensaje);
+    }
+
+    // ... resto de métodos existentes ...
 
     private void addLabelsCoordinates(GridPane board) {
         // Letras (A-J) en la parte superior
@@ -327,13 +571,13 @@ public class GameViewController implements Initializable {
             
             Label name = new Label(ship.getType().getName());
             ProgressBar health = new ProgressBar();
-            health.setProgress((double) (ship.getType().getSize() - ship.getShotReceived()) / ship.getType().getSize());
+            health.setProgress((double) (ship.getType().getSize() - ship.getImpactsRecieved()) / ship.getType().getSize());
             
             // Color según estado
             if (ship.isSunk()) {
                 health.getStyleClass().add("barco-hundido");
                 name.getStyleClass().add("barco-hundido");
-            } else if (ship.getShotReceived() > 0) {
+            } else if (ship.getImpactsRecieved() > 0) {
                 health.getStyleClass().add("barco-danado");
             }
             
@@ -427,9 +671,7 @@ public class GameViewController implements Initializable {
         });
     }
 
-    private void showMessage(String message) {
-        lblMessage.setText(message);
-    }
+    
     
     
 
@@ -442,4 +684,13 @@ public class GameViewController implements Initializable {
         pause.setOnFinished(e -> lblMessage.getStyleClass().remove("mensaje-especial"));
         pause.play();
     }
+
+
+
+
+
+
+    
+
+
 }
