@@ -1,0 +1,270 @@
+
+
+.mainFxmlClass {
+
+}
+/* Estilos principales */
+.root {
+    -fx-font-family: 'Arial';
+    -fx-background-color: linear-gradient(to bottom, #1e3c72, #2a5298);
+}
+
+/* Botones */
+.btn-primary {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+}
+
+.btn-primary:hover {
+    -fx-background-color: #45a049;
+}
+
+.btn-secondary {
+    -fx-background-color: #008CBA;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+}
+
+.btn-secondary:hover {
+    -fx-background-color: #007B9A;
+}
+
+.btn-danger {
+    -fx-background-color: #f44336;
+    -fx-text-fill: white;
+    -fx-background-radius: 5;
+}
+
+.btn-danger:hover {
+    -fx-background-color: #da190b;
+}
+
+/* Labels */
+.title-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 24px;
+}
+
+.subtitle-label {
+    -fx-text-fill: #e0e0e0;
+    -fx-font-weight: bold;
+}
+
+.instruction-label {
+    -fx-text-fill: #ffeb3b;
+    -fx-font-weight: bold;
+}
+
+/* Tablero */
+.casilla-vacia {
+    -fx-background-color: #87CEEB;
+    -fx-border-color: #1e3c72;
+    -fx-border-width: 1;
+}
+
+.casilla-vacia:hover {
+    -fx-background-color: #63b8e0;
+}
+
+.casilla-resaltada {
+    -fx-background-color: #98FB98;
+}
+
+/* Barcos */
+.barco-item {
+    -fx-padding: 5;
+    -fx-background-color: rgba(255,255,255,0.1);
+    -fx-background-radius: 5;
+}
+
+.barco-nombre {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.segmento-barco {
+    -fx-background-color: #8B4513;
+    -fx-border-color: #654321;
+    -fx-border-width: 1;
+}
+
+
+/* Vista de Juego */
+.estado-turno {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px;
+}
+
+.turno-jugador {
+    -fx-text-fill: #4CAF50;
+    -fx-background-color: rgba(76, 175, 80, 0.2);
+    -fx-background-radius: 10;
+}
+
+.turno-cpu {
+    -fx-text-fill: #f44336;
+    -fx-background-color: rgba(244, 67, 54, 0.2);
+    -fx-background-radius: 10;
+}
+
+.mensaje-estado {
+    -fx-font-size: 14px;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.mensaje-especial {
+    -fx-text-fill: #FFD700;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+/* Tableros */
+.casilla-agua {
+    -fx-background-color: #87CEEB;
+    -fx-border-color: #1e3c72;
+    -fx-border-width: 1;
+}
+
+.casilla-barco {
+    -fx-background-color: #8B4513;
+    -fx-border-color: #654321;
+    -fx-border-width: 1;
+}
+
+.casilla-impacto {
+    -fx-background-color: #ff4444;
+    -fx-border-color: #cc0000;
+    -fx-border-width: 2;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+.casilla-fallo {
+    -fx-background-color: #e0e0e0;
+    -fx-border-color: #bdbdbd;
+    -fx-border-width: 1;
+    -fx-text-fill: #666;
+}
+
+.casilla-resaltada {
+    -fx-background-color: #98FB98;
+    -fx-border-color: #32CD32;
+    -fx-border-width: 2;
+}
+
+/* Paneles de información */
+.panel-title {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.info-panel {
+    -fx-padding: 10px;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-border-radius: 8;
+}
+
+.barco-info {
+    -fx-padding: 5px;
+    -fx-alignment: CENTER_LEFT;
+}
+
+.barco-danado .bar {
+    -fx-accent: #FFA500;
+}
+
+.barco-hundido {
+    -fx-text-fill: #ff4444;
+    -fx-strikethrough: true;
+}
+
+.barco-hundido .bar {
+    -fx-accent: #ff4444;
+}
+
+/* Coordenadas */
+.coordenada-label {
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-alignment: CENTER;
+    -fx-min-width: 35px;
+    -fx-min-height: 35px;
+}
+
+/* Botones especiales */
+.btn-special {
+    -fx-background-color: #9C27B0;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 5;
+}
+
+.btn-special:hover {
+    -fx-background-color: #7B1FA2;
+}
+
+.estado-flota {
+    -fx-text-fill: #e0e0e0;
+    -fx-font-style: italic;
+}
+
+
+
+/* Vista de Configuración
+   configuration.fxml 
+
+*/
+.config-section {
+    -fx-padding: 15px;
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-border-radius: 8;
+}
+
+.section-title {
+    -fx-text-fill: #FFD700;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.slider .track {
+    -fx-background-color: #87CEEB;
+}
+
+.slider .thumb {
+    -fx-background-color: #4CAF50;
+}
+
+.text-field {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-background-radius: 4;
+    -fx-border-color: #87CEEB;
+    -fx-border-radius: 4;
+}
+
+.combo-box {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-background-radius: 4;
+}
+
+.check-box {
+    -fx-text-fill: white;
+}
+
+.check-box .box {
+    -fx-background-color: rgba(255, 255, 255, 0.9);
+    -fx-border-color: #87CEEB;
+}
+
+.check-box:selected .mark {
+    -fx-background-color: #4CAF50;
+}

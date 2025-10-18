@@ -13,9 +13,8 @@ import com.cenit.battleship.model.Cell;
 import com.cenit.battleship.model.Coordinate;
 import com.cenit.battleship.model.Ship;
 import com.cenit.battleship.model.ShotResult;
-import com.cenit.battleship.sevices.StorageService;
+import com.cenit.battleship.services.StorageService;
 import java.net.URL;
-
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -40,70 +39,67 @@ import javafx.stage.Stage;
 import javafx.util.Duration;
 
 public class GameViewController implements Initializable {
-    
-    private static GameController gameControllerStatic;    
+
+    private static GameController gameControllerStatic;
 
     private GameController gameController;
     private StorageService storageService;
     public SoundController soundController;
-    private AnimationController animationController;  
+    private AnimationController animationController;
 
-   private boolean activeGame = true;
-    
+    private boolean activeGame = true;
+
     // Tablero del jugador
-    @FXML 
+    @FXML
     private GridPane playerBoard;
-    @FXML 
+    @FXML
     private Label lblPlayerState;
-    
+
     // Tablero de la CPU (para disparar)
-    @FXML 
+    @FXML
     private GridPane CPUBoard;
-    @FXML 
+    @FXML
     private Label lblCPUState;
-    @FXML 
+    @FXML
     private Label lblSkillpoints;
     // Controles del juego
-    @FXML 
+    @FXML
     private Label lblTurn;
-    @FXML 
+    @FXML
     private Label lblMessage;
-    @FXML 
+    @FXML
     private Button btnSkill;
-    @FXML 
+    @FXML
     private Button btnPause;
-    @FXML 
+    @FXML
     private Button btnReset;
-    @FXML 
+    @FXML
     private ProgressBar gameProgress;
-    
+
     // Paneles de información
-    @FXML 
+    @FXML
     private VBox playerInfoPanel;
-    @FXML 
+    @FXML
     private VBox CPUInfoPanel;
-    @FXML 
+    @FXML
     private VBox panelSkills;
 
-    @FXML 
+    @FXML
     private MenuItem menuGuardar;
-    @FXML 
+    @FXML
     private MenuItem menuGuardarComo;
-    @FXML 
-    private MenuItem menuCargar; 
-    @FXML 
+    @FXML
+    private MenuItem menuCargar;
+    @FXML
     private MenuItem menuSalir;
-    
-    
 
-    
     // Matrices de botones
     private Button[][] playerButtons = new Button[10][10];
     private Button[][] CPUButtons = new Button[10][10];
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-         // Si tenemos un GameController estático (desde carga), usarlo
+        // Si tenemos un GameController estático (desde carga), usarlo
         if (gameControllerStatic != null) {
             this.gameController = gameControllerStatic;
             gameControllerStatic = null; // Limpiar para futuras uses
@@ -111,23 +107,19 @@ public class GameViewController implements Initializable {
             // Si no, crear uno nuevo (juego normal)
             this.gameController = new GameController();
         }
-        
+
         storageService = new StorageService();
         soundController = SoundController.getInstance();
         animationController = AnimationController.getInstance();
-        
+
         initializeInterface();
         configureEvents();
-        configurarMenu();        
+        configurarMenu();
         startGame();
-        
+
         soundController.startMusicBackground();
 
-     
-        
-        
     }
-   
 
     private void initializeInterface() {
         initializeBoard(playerBoard, playerButtons, false);
@@ -138,36 +130,35 @@ public class GameViewController implements Initializable {
 
     private void initializeBoard(GridPane board, Button[][] buttons, boolean isClickable) {
         board.getChildren().clear();
-        
+
         // Agregar labels de coordenadas
         addLabelsCoordinates(board);
-        
+
         for (int i = 0; i < 10; i++) {
             for (int j = 0; j < 10; j++) {
                 Button button = new Button();
                 button.setPrefSize(35, 35);
                 button.getStyleClass().add("casilla-agua");
-                
+
                 final int x = i;
                 final int y = j;
-                
+
                 if (isClickable) {
                     button.setOnMouseClicked(e -> handlePlayerShot(x, y));
                     button.setOnMouseEntered(e -> highlightCPUcell(x, y));
                     button.setOnMouseExited(e -> clearCPUHighlight());
                 }
-                
+
                 // Posicionar en grid (offset por labels)
                 board.add(button, j + 1, i + 1);
                 buttons[i][j] = button;
             }
         }
-        
-        updateBoardDisplay(buttons, isClickable ? 
-            gameController.getCPUBoard() : gameController.getPlayerBoard());
+
+        updateBoardDisplay(buttons, isClickable
+                ? gameController.getCPUBoard() : gameController.getPlayerBoard());
     }
-    
-    
+
     private void configurarMenu() {
         menuGuardar.setOnAction(e -> guardarPartida());
         menuGuardarComo.setOnAction(e -> guardarPartidaComo());
@@ -175,16 +166,16 @@ public class GameViewController implements Initializable {
         menuSalir.setOnAction(e -> exitToMainMenu());
     }
 
-/**
-     * Método estático para establecer el GameController antes de cargar la vista
-     * Esto se usa cuando cargamos una partida desde el menú principal
+    /**
+     * Método estático para establecer el GameController antes de cargar la
+     * vista Esto se usa cuando cargamos una partida desde el menú principal
      */
-public static void setGameController(GameController controller) {
+    public static void setGameController(GameController controller) {
         gameControllerStatic = controller;
     }
 
     private void guardarPartida() {
-        if (storageService.guardarPartidaAutomatico(gameController)) {
+        if (storageService.saveGameAuto(gameController)) {
             showMessage("Partida guardada automáticamente");
         } else {
             showMessage("Error al guardar la partida");
@@ -199,7 +190,7 @@ public static void setGameController(GameController controller) {
 
         Optional<String> result = dialog.showAndWait();
         result.ifPresent(nombre -> {
-            if (storageService.guardarPartida(gameController, nombre)) {
+            if (storageService.saveGame(gameController, nombre)) {
                 showMessage("Partida guardada como: " + nombre);
             } else {
                 showMessage("Error al guardar la partida");
@@ -212,7 +203,7 @@ public static void setGameController(GameController controller) {
             // Mostrar diálogo de selección de partidas guardadas
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/GuardadosView.fxml"));
             Parent root = loader.load();
-            
+
             SavedViewController controller = loader.getController();
             controller.setSaveGameListener(new SavedViewController.SaveGameListener() {
                 @Override
@@ -220,21 +211,21 @@ public static void setGameController(GameController controller) {
                     // Cargar la partida seleccionada
                     cargarPartidaSeleccionada(nombreArchivo);
                 }
-                
+
                 @Override
                 public void onDialogoCerrado() {
                     // El usuario cerró el diálogo sin seleccionar
                     System.out.println("Diálogo de carga cerrado");
                 }
             });
-            
+
             Stage stage = new Stage();
             stage.setTitle("Cargar Partida Guardada");
             stage.setScene(new Scene(root, 800, 500));
             stage.initModality(Modality.APPLICATION_MODAL);
             stage.initOwner(App.getPrimaryStage());
             stage.showAndWait();
-            
+
         } catch (Exception ex) {
             ex.printStackTrace();
             showMessage("Error al cargar el diálogo de partidas guardadas");
@@ -248,13 +239,13 @@ public static void setGameController(GameController controller) {
             confirmacion.setTitle("Cargar Partida");
             confirmacion.setHeaderText("¿Cargar partida: " + nombreArchivo + "?");
             confirmacion.setContentText("El progreso actual se perderá si no está guardado.");
-            
+
             confirmacion.showAndWait().ifPresent(response -> {
                 if (response == ButtonType.OK) {
                     realizarCargaPartida(nombreArchivo);
                 }
             });
-            
+
         } catch (Exception ex) {
             ex.printStackTrace();
             showMessage("Error al preparar la carga de partida");
@@ -265,22 +256,22 @@ public static void setGameController(GameController controller) {
         try {
             // Cargar la partida desde el archivo
             GameController nuevoGameController = storageService.loadGame(nombreArchivo);
-            
+
             if (nuevoGameController != null) {
                 // Reemplazar el controlador actual
                 this.gameController = nuevoGameController;
-                
+
                 // Reinicializar la interfaz con el nuevo estado
                 resetInterface();
-                
+
                 showMessage("Partida cargada exitosamente: " + nombreArchivo);
                 soundController.playClickBoton();
-                
+
             } else {
                 showMessage("Error: No se pudo cargar la partida seleccionada");
                 soundController.playError();
             }
-            
+
         } catch (Exception ex) {
             ex.printStackTrace();
             showMessage("Error crítico al cargar la partida: " + ex.getMessage());
@@ -291,20 +282,20 @@ public static void setGameController(GameController controller) {
     private void resetInterface() {
         // Detener cualquier animación en curso
         activeGame = false;
-        
+
         // Actualizar ambos tableros
         updateBoardDisplay(playerButtons, gameController.getPlayerBoard());
         updateBoardDisplay(CPUButtons, gameController.getCPUBoard());
-        
+
         // Actualizar paneles de información
         updateInformationPanels();
-        
+
         // Actualizar habilidades
         updateSkills();
-        
+
         // Actualizar estado del turno
         updateTurnStatus();
-        
+
         // Actualizar mensaje según el estado del juego
         if (gameController.isGameFinished()) {
             if (gameController.playerWin()) {
@@ -323,10 +314,10 @@ public static void setGameController(GameController controller) {
                 runCPUTurn();
             }
         }
-        
+
         // Reactivar el juego si no ha terminado
         activeGame = !gameController.isGameFinished();
-        
+
         // Actualizar puntos de habilidad en la UI
         updateSkillPoints();
     }
@@ -344,7 +335,7 @@ public static void setGameController(GameController controller) {
         confirmacion.setTitle("Salir al Menú Principal");
         confirmacion.setHeaderText("¿Salir al menú principal?");
         confirmacion.setContentText("El progreso no guardado se perderá.");
-        
+
         confirmacion.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
                 try {
@@ -365,7 +356,6 @@ public static void setGameController(GameController controller) {
     }
 
     // ... resto de métodos existentes ...
-
     private void addLabelsCoordinates(GridPane board) {
         // Letras (A-J) en la parte superior
         for (int i = 0; i < 10; i++) {
@@ -373,7 +363,7 @@ public static void setGameController(GameController controller) {
             label.getStyleClass().add("coordenada-label");
             board.add(label, i + 1, 0);
         }
-        
+
         // Números (1-10) en el lado izquierdo
         for (int i = 0; i < 10; i++) {
             Label label = new Label(String.valueOf(i + 1));
@@ -395,55 +385,59 @@ public static void setGameController(GameController controller) {
     }
 
     private void handlePlayerShot(int x, int y) {
-        if (!activeGame || !gameController.isPlayerTurn()) return;
-        
+        if (!activeGame || !gameController.isPlayerTurn()) {
+            return;
+        }
+
         Coordinate coord = new Coordinate(x, y);
-        
+
         try {
             ShotResult result = gameController.playerShoots(coord);
             updateFiredCell(CPUButtons[x][y], result);
             showMessage(result.message());
-            
+
             if (result.sunk()) {
-                ShowSpecialMessage("¡Hundiste un " + 
-                    gameController.getLastSunkShipCPU().getType().getName() + "!");
+                ShowSpecialMessage("¡Hundiste un "
+                        + gameController.getLastSunkShipCPU().getType().getName() + "!");
             }
-            
+
             if (gameController.isGameFinished()) {
                 endGame(true);
                 return;
             }
-            
+
             // Cambiar turno a CPU
             if (!result.impact()) {
                 gameController.setPlayerTurn(false);
                 updateTurnStatus();
                 runCPUTurn();
             }
-            
+
         } catch (IllegalStateException e) {
             showMessage("Casilla ya disparada");
         }
     }
 
     private void runCPUTurn() {
-        if (!activeGame) return;
-        
+        if (!activeGame) {
+            return;
+        }
+
         lblMessage.setText("Turno de la CPU...");
         disableCPUboard(true);
-        
+
         // Pausa para dar sensación de pensamiento
         PauseTransition pause = new PauseTransition(Duration.seconds(1.5));
         pause.setOnFinished(e -> {
-            ShotResult result = gameController.CPUShoots();
+            ShotResult result = gameController.cpuShoots();
             updateCPUShotCell(result);
             showMessage("CPU: " + result.message());
-            
+
             if (result.sunk()) {
-                ShowSpecialMessage("¡La CPU hundió tu " + 
-                    gameController.getLastSunkShipPlayer().getType().getName() + "!");
+                ShowSpecialMessage("¡La CPU hundió tu "
+                        + gameController.getLastSunkShipPlayer().getType().getName() + "!");
             }
-            
+
             if (gameController.isGameFinished()) {
                 endGame(false);
             } else if (!result.impact()) {
@@ -460,7 +454,7 @@ public static void setGameController(GameController controller) {
 
     private void updateFiredCell(Button button, ShotResult result) {
         button.getStyleClass().removeAll("casilla-agua", "casilla-resaltada");
-        
+
         if (result.impact()) {
             button.getStyleClass().add("casilla-impacto");
             button.setText("💥");
@@ -468,11 +462,10 @@ public static void setGameController(GameController controller) {
             button.getStyleClass().add("casilla-fallo");
             button.setText("●");
         }
-        
+
         button.setDisable(true);
     }
 
-    
     private void updateCPUShotCell(ShotResult result) {
         Coordinate lastShot = gameController.getLastShotCPU();
         Button boton = playerButtons[lastShot.x()][lastShot.y()];
@@ -484,12 +477,12 @@ public static void setGameController(GameController controller) {
             for (int j = 0; j < 10; j++) {
                 Cell cell = board.getCell(i, j);
                 Button button = buttons[i][j];
-                
+
                 button.getStyleClass().removeAll(
-                    "casilla-agua", "casilla-barco", 
-                    "casilla-impacto", "casilla-fallo"
+                        "casilla-agua", "casilla-barco",
+                        "casilla-impacto", "casilla-fallo"
                 );
-                
+
                 switch (cell.getState()) {
                     case WATER:
                         button.getStyleClass().add("casilla-agua");
@@ -511,8 +504,10 @@ public static void setGameController(GameController controller) {
     }
 
     private void highlightCPUcell(int x, int y) {
-        if (!gameController.isPlayerTurn()) return;
-        
+        if (!gameController.isPlayerTurn()) {
+            return;
+        }
+
         Button button = CPUButtons[x][y];
         if (!button.isDisable()) {
             button.getStyleClass().add("casilla-resaltada");
@@ -553,26 +548,26 @@ public static void setGameController(GameController controller) {
     private void updateInformationPanels() {
         // Panel del jugador
         updateFleetPanel(playerInfoPanel, gameController.getPlayerShips(), "Tus Barcos");
-        
+
         // Panel de la CPU  
         updateFleetPanel(CPUInfoPanel, gameController.getCPUShips(), "Barcos Enemigos");
     }
 
     private void updateFleetPanel(VBox panel, List<Ship> ships, String title) {
         panel.getChildren().clear();
-        
+
         Label lblTitle = new Label(title);
         lblTitle.getStyleClass().add("subtitle-label");
         panel.getChildren().add(lblTitle);
-        
+
         for (Ship ship : ships) {
             HBox infoShip = new HBox(10);
             infoShip.getStyleClass().add("barco-info");
-            
+
             Label name = new Label(ship.getType().getName());
             ProgressBar health = new ProgressBar();
             health.setProgress((double) (ship.getType().getSize() - ship.getImpactsRecieved()) / ship.getType().getSize());
-            
+
             // Color según estado
             if (ship.isSunk()) {
                 health.getStyleClass().add("barco-hundido");
@@ -580,7 +575,7 @@ public static void setGameController(GameController controller) {
             } else if (ship.getImpactsRecieved() > 0) {
                 health.getStyleClass().add("barco-danado");
             }
-            
+
             infoShip.getChildren().addAll(name, health);
             panel.getChildren().add(infoShip);
         }
@@ -589,11 +584,11 @@ public static void setGameController(GameController controller) {
     private void updateSkills() {
         // TODO: Implementar sistema de habilidades
         panelSkills.getChildren().clear();
-        
+
         Label lblTitle = new Label("Habilidades");
         lblTitle.getStyleClass().add("subtitle-label");
         panelSkills.getChildren().add(lblTitle);
-        
+
         // Ejemplo de habilidad
         Button btnSonar = new Button("Sonar (2)");
         btnSonar.setOnAction(e -> activarSonar());
@@ -613,7 +608,7 @@ public static void setGameController(GameController controller) {
     private void pauseGame() {
         activeGame = !activeGame;
         disableCPUboard(!activeGame);
-        
+
         if (!activeGame) {
             lblMessage.setText("JUEGO EN PAUSA");
             btnPause.setText("Reanudar");
@@ -634,13 +629,13 @@ public static void setGameController(GameController controller) {
     private void endGame(boolean palyerWin) {
         activeGame = false;
         disableCPUboard(true);
-        
+
         if (palyerWin) {
             ShowSpecialMessage("¡VICTORIA! Has hundido toda la flota enemiga.");
         } else {
             ShowSpecialMessage("¡DERROTA! La CPU ha hundido todos tus barcos.");
         }
-        
+
         // Mostrar diálogo de fin de juego
         showDialogEndGame(palyerWin);
     }
@@ -649,15 +644,15 @@ public static void setGameController(GameController controller) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Fin del Juego");
         alert.setHeaderText(victoria ? "¡Felicidades! Has Ganado" : "Juego Terminado");
-        alert.setContentText(victoria ? 
-            "Has demostrado ser un excelente almirante." :
-            "La flota enemiga ha prevalecido. Mejor suerte la próxima vez.");
-        
+        alert.setContentText(victoria
+                ? "Has demostrado ser un excelente almirante."
+                : "La flota enemiga ha prevalecido. Mejor suerte la próxima vez.");
+
         ButtonType btnRevancha = new ButtonType("Revancha");
         ButtonType btnMenu = new ButtonType("Menú Principal");
-        
+
         alert.getButtonTypes().setAll(btnRevancha, btnMenu);
-        
+
         alert.showAndWait().ifPresent(buttonType -> {
             if (buttonType == btnRevancha) {
                 resetGame();
@@ -671,26 +666,14 @@ public static void setGameController(GameController controller) {
         });
     }
 
-    
-    
-    
-
     private void ShowSpecialMessage(String mensaje) {
         lblMessage.getStyleClass().add("mensaje-especial");
         lblMessage.setText(mensaje);
-        
+
         // Remover la clase después de un tiempo
         PauseTransition pause = new PauseTransition(Duration.seconds(3));
         pause.setOnFinished(e -> lblMessage.getStyleClass().remove("mensaje-especial"));
         pause.play();
     }
-
-
-
-
-
-
-    
-
 
 }

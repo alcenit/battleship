@@ -8,6 +8,8 @@ module com.cenit.battleship {
     opens com.cenit.battleship to javafx.fxml;
     opens com.cenit.battleship.view to javafx.fxml;
     opens com.cenit.battleship.controller to javafx.fxml;
+    opens com.cenit.battleship.styles;
+    
     
     exports com.cenit.battleship;
     exports com.cenit.battleship.view;

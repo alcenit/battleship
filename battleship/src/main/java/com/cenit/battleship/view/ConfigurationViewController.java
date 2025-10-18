@@ -51,7 +51,7 @@ public class ConfigurationViewController implements Initializable {
 
     private void loadCurrentConfiguration() {
         // Dificultad
-        switch(config.getCPUDifficulty()) {
+        switch(config.getCpuDifficulty()) {
             case EASY: DifficultyCombo.setValue("Fácil"); break;
             case NORMAL: DifficultyCombo.setValue("Normal"); break;
             case HARD: DifficultyCombo.setValue("Difícil"); break;
@@ -111,10 +111,10 @@ public class ConfigurationViewController implements Initializable {
     private void saveConfiguration() {
         // Dificultad
         switch(DifficultyCombo.getValue()) {
-            case "Fácil": config.setCPUDifficulty(CPUController.Difficulty.EASY); break;
-            case "Normal": config.setCPUDifficulty(CPUController.Difficulty.NORMAL); break;
-            case "Difícil": config.setCPUDifficulty(CPUController.Difficulty.HARD); break;
-            case "Experto": config.setCPUDifficulty(CPUController.Difficulty.EXPERT); break;
+            case "Fácil": config.setCpuDifficulty(CPUController.Difficulty.EASY); break;
+            case "Normal": config.setCpuDifficulty(CPUController.Difficulty.NORMAL); break;
+            case "Difícil": config.setCpuDifficulty(CPUController.Difficulty.HARD); break;
+            case "Experto": config.setCpuDifficulty(CPUController.Difficulty.EXPERT); break;
         }
         
         // Sonido

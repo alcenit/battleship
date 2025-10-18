@@ -45,7 +45,7 @@ public class Board {
         return x >= 0 && x < SIZE && y >= 0 && y < SIZE;
     }
     
-    public ShotResult makeShot(Coordinate coord) {
+    public ShotResult receiveShot(Coordinate coord) {
         Cell cell = getCell(coord);
         return cell.wasHit();
     }

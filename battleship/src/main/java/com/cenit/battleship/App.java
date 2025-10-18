@@ -18,10 +18,10 @@ public class App extends Application {
     @Override
     public void start(Stage stage) throws IOException {
         primaryStage = stage;
-        scene = new Scene(loadFXML("view/MainView"), 1200, 800);
+        scene = new Scene(loadFXML("com/cenit/battleship/view/MainView"), 1200, 800);
         
         // Configurar CSS
-        scene.getStylesheets().add(getClass().getResource("/css/main.css").toExternalForm());
+        scene.getStylesheets().add(getClass().getResource("/com/cenit/battleship/styles/mainview.css").toExternalForm());
         
         stage.setTitle("Battleship - Edición Especial");
         stage.setScene(scene);

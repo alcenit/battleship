@@ -135,11 +135,11 @@ public class Configuration {
     
     // ========== GETTERS Y SETTERS ==========
     
-    public CPUController.Difficulty getCPUDifficulty() {
+    public CPUController.Difficulty getCpuDifficulty() {
         return CPUDifficulty;
     }
     
-    public void setCPUDifficulty(CPUController.Difficulty difficultyCPU) {
+    public void setCpuDifficulty(CPUController.Difficulty difficultyCPU) {
         this.CPUDifficulty = difficultyCPU;
     }
     

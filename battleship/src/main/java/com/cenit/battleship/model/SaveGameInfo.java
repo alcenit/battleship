@@ -11,38 +11,38 @@ import java.util.Date;
  * @author Usuario
  */
 public class SaveGameInfo {
-    private String nombreArchivo;
-    private Date fecha;
-    private int turnosTranscurridos;
-    private int barcosHundidosJugador;
-    private int barcosHundidosCPU;
-    private long tamañoArchivo;
+    private String filename;
+    private Date date;
+    private int elapsedTurns;
+    private int playerSunkenShips;
+    private int cpuSunkenShips;
+    private long filesize;
 
-    public SaveGameInfo(String nombreArchivo, Date fecha, int turnosTranscurridos, 
-                       int barcosHundidosJugador, int barcosHundidosCPU, long tamañoArchivo) {
-        this.nombreArchivo = nombreArchivo;
-        this.fecha = fecha;
-        this.turnosTranscurridos = turnosTranscurridos;
-        this.barcosHundidosJugador = barcosHundidosJugador;
-        this.barcosHundidosCPU = barcosHundidosCPU;
-        this.tamañoArchivo = tamañoArchivo;
+    public SaveGameInfo(String filename, Date date, int elapsedTurns, 
+                       int playerSunkenShips, int cpuSunkenShips, long filesize) {
+        this.filename = filename;
+        this.date = date;
+        this.elapsedTurns = elapsedTurns;
+        this.playerSunkenShips = playerSunkenShips;
+        this.cpuSunkenShips = cpuSunkenShips;
+        this.filesize = filesize;
     }
 
     // Getters
-    public String getNombreArchivo() { return nombreArchivo; }
-    public Date getFecha() { return fecha; }
-    public int getTurnosTranscurridos() { return turnosTranscurridos; }
-    public int getBarcosHundidosJugador() { return barcosHundidosJugador; }
-    public int getBarcosHundidosCPU() { return barcosHundidosCPU; }
-    public long getTamañoArchivo() { return tamañoArchivo; }
+    public String getFilename() { return filename; }
+    public Date getDate() { return date; }
+    public int getElapsedTurns() { return elapsedTurns; }
+    public int getPlayerSunkenShips() { return playerSunkenShips; }
+    public int getCpuSunkenShips() { return cpuSunkenShips; }
+    public long getFilesize() { return filesize; }
     
-    public String getFormattedTamaño() {
-        if (tamañoArchivo < 1024) return tamañoArchivo + " B";
-        else if (tamañoArchivo < 1024 * 1024) return String.format("%.1f KB", tamañoArchivo / 1024.0);
-        else return String.format("%.1f MB", tamañoArchivo / (1024.0 * 1024.0));
+    public String getFormattedSize() {
+        if (filesize < 1024) return filesize + " B";
+        else if (filesize < 1024 * 1024) return String.format("%.1f KB", filesize / 1024.0);
+        else return String.format("%.1f MB", filesize / (1024.0 * 1024.0));
     }
     
-    public String getFormattedFecha() {
-        return new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(fecha);
+    public String getFormattedDate() {
+        return new java.text.SimpleDateFormat("dd/MM/yyyy HH:mm").format(date);
     }
 }

@@ -219,7 +219,7 @@ public class SkillController {
         return null;
     }
 
-    public SkillResult runCPUSkill(Skill skill) {
+    public SkillResult executeCPUSkill(Skill skill) {
         switch (skill) {
             case SONAR:
                 return useCPUSonar();

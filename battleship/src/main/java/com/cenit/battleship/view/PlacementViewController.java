@@ -5,6 +5,7 @@
 package com.cenit.battleship.view;
 
 import com.cenit.battleship.App;
+import com.cenit.battleship.controller.GameController;
 import com.cenit.battleship.model.Ship;
 import com.cenit.battleship.model.enums.Direction;
 import com.cenit.battleship.model.enums.ShipType;
@@ -25,6 +26,8 @@ public class PlacementViewController implements Initializable {
 
     
     private static String gameMode;
+    private static GameController gameController;
+    private static String playerName;
     private List<Ship> shipToPlacement;
     private Ship selectShip;
     private Direction actualDirection = Direction.HORIZONTAL;
@@ -49,6 +52,12 @@ public class PlacementViewController implements Initializable {
 
     public static void setGameMode(String mode) {
         gameMode = mode;
+    }
+    public static void setGameController(GameController gameController) {
+        gameController = gameController;
+    }
+    public static void setPlayerName(String name) {
+        playerName = name;
     }
 
     @Override

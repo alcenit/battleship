@@ -8,7 +8,6 @@ import com.cenit.battleship.model.ShotResult;
 import com.cenit.battleship.model.Skill;
 import com.cenit.battleship.model.SkillResult;
 import com.cenit.battleship.model.SkillSystem;
-import com.cenit.battleship.model.enums.CellState;
 import com.cenit.battleship.model.enums.Direction;
 import com.cenit.battleship.model.enums.GamePhase;
 import com.cenit.battleship.model.enums.ShipType;
@@ -32,37 +31,17 @@ public class GameController {
     private SkillSystem CPUSkills;
     private SkillController skillController;
     
-    private Set<Ship> sunkShipsCPU;  // Corregido el nombre
-    private Set<Ship> sunkShipsPlayer; // Corregido el nombre
+    private Set<Ship> sunkShipsCPU;
+    private Set<Ship> sunkShipsPlayer;
     
-    // Campos faltantes que necesitas
+    // Campos para estado del juego
     private int turnosTranscurridos;
     private boolean turnoJugador;
-    private GamePhase estadoJuego;
+    private GamePhase gamePhase; // Cambiado de GameState a GamePhase
 
     public GameController() {
         this.game = new Game();
         this.cpuController = new CPUController(CPUController.Difficulty.NORMAL, game.getBoardPlayer());
-        this.playerShips = new ArrayList<>();
-        this.CPUShips = new ArrayList<>();
-        
-        this.playerSkills = new SkillSystem(true);
-        this.CPUSkills = new SkillSystem(false);
-        this.skillController = new SkillController(this);
-        
-        this.sunkShipsCPU = new HashSet<>();  // Corregido el nombre
-        this.sunkShipsPlayer = new HashSet<>(); // Corregido el nombre
-        
-        this.turnosTranscurridos = 0;
-        this.turnoJugador = true;
-        this.estadoJuego = GamePhase.IN_PLAY;
-        
-        initializeShips();
-    }
-    
-    public GameController(CPUController.Difficulty dificultyCPU) {
-        this.game = new Game();
-        this.cpuController = new CPUController(dificultyCPU, game.getBoardPlayer());
         this.playerShips = new ArrayList<>();
         this.CPUShips = new ArrayList<>();
         
@@ -75,12 +54,32 @@ public class GameController {
         
         this.turnosTranscurridos = 0;
         this.turnoJugador = true;
-        this.estadoJuego = GamePhase.IN_PLAY;
+        this.gamePhase = GamePhase.IN_PLAY;
         
         initializeShips();
     }
     
-    // Métodos necesarios para la carga
+    public GameController(CPUController.Difficulty difficultyCPU) { // Corregido "dificulty" a "difficulty"
+        this.game = new Game();
+        this.cpuController = new CPUController(difficultyCPU, game.getBoardPlayer());
+        this.playerShips = new ArrayList<>();
+        this.CPUShips = new ArrayList<>();
+        
+        this.playerSkills = new SkillSystem(true);
+        this.CPUSkills = new SkillSystem(false);
+        this.skillController = new SkillController(this);
+        
+        this.sunkShipsCPU = new HashSet<>();
+        this.sunkShipsPlayer = new HashSet<>();
+        
+        this.turnosTranscurridos = 0;
+        this.turnoJugador = true;
+        this.gamePhase = GamePhase.IN_PLAY;
+        
+        initializeShips();
+    }
+    
+    // Métodos para la carga
     public int getTurnosTranscurridos() {
         return turnosTranscurridos;
     }
@@ -89,18 +88,18 @@ public class GameController {
         this.turnosTranscurridos = turnos;
     }
     
-    public GamePhase getGameState() {
+    public GamePhase getGamePhase() { // Cambiado de getGameState a getGamePhase
         if (allShipsSunk(CPUShips)) {
             return GamePhase.PLAYER_WIN;
         } else if (allShipsSunk(playerShips)) {
             return GamePhase.CPU_WIN;
         } else {
-            return estadoJuego;
+            return gamePhase;
         }
     }
     
-    public void setGameState(GamePhase state) {
-        this.estadoJuego = state;
+    public void setGamePhase(GamePhase phase) { // Cambiado de setGameState a setGamePhase
+        this.gamePhase = phase;
     }
     
     public void setTurnoJugador(boolean turnoJugador) {
@@ -119,7 +118,7 @@ public class GameController {
     private Ship findSunkenShip(List<Ship> ships, Set<Ship> counted) {
         for (Ship ship : ships) {
             if (ship.isSunk() && !counted.contains(ship)) {
-                counted.add(ship);  // IMPORTANTE: agregar al set contado
+                counted.add(ship);
                 return ship;
             }
         }
@@ -127,7 +126,7 @@ public class GameController {
     }
         
     public ShotResult playerShoots(Coordinate coord) {
-        if (!turnoJugador || estadoJuego != GamePhase.IN_PLAY) {
+        if (!turnoJugador || gamePhase != GamePhase.IN_PLAY) {
             throw new IllegalStateException("No es el turno del jugador o el juego no está activo");
         }
         
@@ -140,7 +139,7 @@ public class GameController {
             if (result.sunk()) {
                 Ship sunkShip = findSunkenShip(CPUShips, sunkShipsCPU);
                 if (sunkShip != null) {
-                    playerSkills.earnSinkingPoints();  // Método corregido
+                    playerSkills.earnSinkingPoints();
                     lastSunkenShipCPU = sunkShip;
                     System.out.println("¡Hundiste un " + sunkShip.getType().getName() + "!");
                 }
@@ -154,22 +153,22 @@ public class GameController {
 
         // Verificar si el juego terminó
         if (allShipsSunk(CPUShips)) {
-            estadoJuego = GamePhase.PLAYER_WIN;
+            gamePhase = GamePhase.PLAYER_WIN;
         }
 
         return result;
     }
     
     // Para la CPU
-    public ShotResult CPUShoots() {
-        if (turnoJugador || estadoJuego != GamePhase.IN_PLAY) {
+    public ShotResult cpuShoots() { //  cpuShoots (convención Java)
+        if (turnoJugador || gamePhase != GamePhase.IN_PLAY) {
             throw new IllegalStateException("No es el turno de la CPU o el juego no está activo");
         }
         
         Coordinate shot = cpuController.generateShot();
         lastShotCPU = shot;
         
-        ShotResult result = game.getBoardPlayer().makeShot(shot);
+        ShotResult result = game.getBoardPlayer().receiveShot(shot); // Cambiado makeShot a receiveShot si es necesario
         cpuController.processResult(shot, result);
         turnosTranscurridos++;
         
@@ -179,7 +178,7 @@ public class GameController {
             if (result.sunk()) {
                 Ship sunkShip = findSunkenShip(playerShips, sunkShipsPlayer);
                 if (sunkShip != null) {
-                    CPUSkills.earnSinkingPoints();  // Método corregido
+                    CPUSkills.earnSinkingPoints();
                     lastSunkenShipPlayer = sunkShip;
                     System.out.println("La CPU hundió tu " + sunkShip.getType().getName() + "!");
                 }
@@ -193,7 +192,7 @@ public class GameController {
 
         // Verificar si el juego terminó
         if (allShipsSunk(playerShips)) {
-            estadoJuego = GamePhase.CPU_WIN;
+            gamePhase = GamePhase.CPU_WIN;
         }
         
         return result;
@@ -247,7 +246,7 @@ public class GameController {
     public void useCPUSkill() {
         Skill cpuSkill = skillController.decideCPUSkill();
         if (cpuSkill != null && CPUSkills.canUseSkill(cpuSkill)) {
-            SkillResult result = skillController.runCPUSkill(cpuSkill);
+            SkillResult result = skillController.executeCPUSkill(cpuSkill); // Cambiado executeCPUSkill a executeCPUSkill
             if (result.isSuccessful()) {
                 CPUSkills.useSkill(cpuSkill);
             }
@@ -271,23 +270,24 @@ public class GameController {
         CPUShips.add(new Ship(ShipType.FRIGATE));
         CPUShips.add(new Ship(ShipType.CRUISER));
 
-        // TODO: Colocar barcos en los tableros (necesitas implementar esto)
+        // Colocar barcos en los tableros
         placeShipsOnBoards();
     }
     
     private void placeShipsOnBoards() {
-        // Implementar lógica para colocar barcos en los tableros
-        // Esto es temporal - necesitarás una lógica real de colocación
-        
-        // Ejemplo muy básico (debes implementar una lógica proper)
-        for (Ship ship : playerShips) {
-            // Colocar barcos del jugador
-            // game.getBoardPlayer().placeShip(ship, new Coordinate(0,0), Direction.HORIZONTAL);
-        }
-        
-        for (Ship ship : CPUShips) {
-            // Colocar barcos de la CPU aleatoriamente
-            // game.getBoardCPU().placeShipRandomly(ship);
+        // Implementación básica - necesitarás adaptar según tu modelo
+        try {
+            // Ejemplo para barcos del jugador (debes implementar lógica real)
+            for (Ship ship : playerShips) {
+                // game.getBoardPlayer().placeShip(ship, new Coordinate(0,0), Direction.HORIZONTAL);
+            }
+            
+            // Ejemplo para barcos de la CPU
+            for (Ship ship : CPUShips) {
+                // game.getBoardCPU().placeShipRandomly(ship);
+            }
+        } catch (Exception e) {
+            System.err.println("Error al colocar barcos: " + e.getMessage());
         }
     }
     
@@ -359,7 +359,7 @@ public class GameController {
         // Reiniciar contadores
         turnosTranscurridos = 0;
         turnoJugador = true;
-        estadoJuego = GamePhase.IN_PLAY;
+        gamePhase = GamePhase.IN_PLAY;
         
         // Recolocar barcos
         placeShipsOnBoards();
@@ -396,7 +396,7 @@ public class GameController {
     }
     
     public boolean isGameFinished() { 
-        return estadoJuego == GamePhase.PLAYER_WIN || estadoJuego == GamePhase.CPU_WIN; 
+        return gamePhase == GamePhase.PLAYER_WIN || gamePhase == GamePhase.CPU_WIN; 
     }
     
     public Coordinate getLastShotCPU() { 
@@ -441,5 +441,10 @@ public class GameController {
     
     public Game getGame() {
         return game;
+    }
+    
+    // Método adicional para compatibilidad
+    public GamePhase getGameState() {
+        return getGamePhase();
     }
 }

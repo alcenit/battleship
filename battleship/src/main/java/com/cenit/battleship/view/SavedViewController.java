@@ -5,7 +5,7 @@
 package com.cenit.battleship.view;
 
 import com.cenit.battleship.model.SaveGameInfo;
-import com.cenit.battleship.sevices.StorageService;
+import com.cenit.battleship.services.StorageService;
 import java.net.URL;
 import java.util.List;
 import java.util.ResourceBundle;
@@ -25,34 +25,35 @@ import javafx.scene.control.cell.PropertyValueFactory;
  */
 public class SavedViewController implements Initializable {
 
-    
-    @FXML 
+    @FXML
     private TableView<SaveGameInfo> tablaGuardados;
-    @FXML 
+    @FXML
     private TableColumn<SaveGameInfo, String> colNombre;
-    @FXML 
+    @FXML
     private TableColumn<SaveGameInfo, String> colFecha;
-    @FXML 
+    @FXML
     private TableColumn<SaveGameInfo, String> colTurnos;
-    @FXML 
+    @FXML
     private TableColumn<SaveGameInfo, String> colBarcosJugador;
-    @FXML 
+    @FXML
     private TableColumn<SaveGameInfo, String> colBarcosCPU;
-    @FXML 
+    @FXML
     private TableColumn<SaveGameInfo, String> colTamaño;
-    
-    @FXML 
+
+    @FXML
     private Button btnCargar;
-    @FXML 
+    @FXML
     private Button btnEliminar;
-    @FXML 
+    @FXML
     private Button btnCerrar;
-    
+
     private StorageService storageService;
     private SaveGameListener listener;
 
     public interface SaveGameListener {
+
         void onPartidaCargada(String nombreArchivo);
+
         void onDialogoCerrado();
     }
 
@@ -70,23 +71,23 @@ public class SavedViewController implements Initializable {
 
     private void configurarTabla() {
         colNombre.setCellValueFactory(new PropertyValueFactory<>("nombreArchivo"));
-        colFecha.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedFecha()));
-        colTurnos.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(String.valueOf(cellData.getValue().getTurnosTranscurridos())));
-        colBarcosJugador.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(String.valueOf(cellData.getValue().getBarcosHundidosJugador())));
-        colBarcosCPU.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(String.valueOf(cellData.getValue().getBarcosHundidosCPU())));
-        colTamaño.setCellValueFactory(cellData -> 
-            new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedTamaño()));
-        
+        colFecha.setCellValueFactory(cellData
+                -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedDate()));
+        colTurnos.setCellValueFactory(cellData
+                -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cellData.getValue().getElapsedTurns())));
+        colBarcosJugador.setCellValueFactory(cellData
+                -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cellData.getValue().getPlayerSunkenShips())));
+        colBarcosCPU.setCellValueFactory(cellData
+                -> new javafx.beans.property.SimpleStringProperty(String.valueOf(cellData.getValue().getCpuSunkenShips())));
+        colTamaño.setCellValueFactory(cellData
+                -> new javafx.beans.property.SimpleStringProperty(cellData.getValue().getFormattedSize()));
+
         // Selección única
         tablaGuardados.getSelectionModel().setSelectionMode(SelectionMode.SINGLE);
     }
 
     private void cargarGuardados() {
-        List<SaveGameInfo> guardados = storageService.listarPartidasGuardadas();
+        List<SaveGameInfo> guardados = storageService.listSavedGames();
         tablaGuardados.getItems().setAll(guardados);
     }
 
@@ -94,7 +95,7 @@ public class SavedViewController implements Initializable {
         btnCargar.setOnAction(e -> cargarPartidaSeleccionada());
         btnEliminar.setOnAction(e -> eliminarPartidaSeleccionada());
         btnCerrar.setOnAction(e -> cerrarDialogo());
-        
+
         // Doble click para cargar
         tablaGuardados.setOnMouseClicked(event -> {
             if (event.getClickCount() == 2) {
@@ -107,7 +108,7 @@ public class SavedViewController implements Initializable {
         SaveGameInfo seleccionado = tablaGuardados.getSelectionModel().getSelectedItem();
         if (seleccionado != null) {
             if (listener != null) {
-                listener.onPartidaCargada(seleccionado.getNombreArchivo());
+                listener.onPartidaCargada(seleccionado.getFilename());
             }
             cerrarDialogo();
         } else {
@@ -120,12 +121,12 @@ public class SavedViewController implements Initializable {
         if (seleccionado != null) {
             Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
             confirmacion.setTitle("Eliminar partida");
-            confirmacion.setHeaderText("¿Eliminar partida: " + seleccionado.getNombreArchivo() + "?");
+            confirmacion.setHeaderText("¿Eliminar partida: " + seleccionado.getFilename() + "?");
             confirmacion.setContentText("Esta acción no se puede deshacer.");
-            
+
             confirmacion.showAndWait().ifPresent(response -> {
                 if (response == ButtonType.OK) {
-                    if (storageService.eliminarPartida(seleccionado.getNombreArchivo())) {
+                    if (storageService.deleteGame(seleccionado.getFilename())) {
                         cargarGuardados(); // Recargar lista
                         showAlert("Éxito", "Partida eliminada correctamente.");
                     } else {
@@ -152,5 +153,4 @@ public class SavedViewController implements Initializable {
         alerta.setContentText(mensaje);
         alerta.showAndWait();
     }
-}    
-
+}

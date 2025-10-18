@@ -5,7 +5,7 @@
          http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.tuempresa</groupId>
+    <groupId>com.cenit</groupId>
     <artifactId>battleship-game</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
@@ -67,7 +67,7 @@
                 <artifactId>javafx-maven-plugin</artifactId>
                 <version>0.0.8</version>
                 <configuration>
-                    <mainClass>com.tuempresa.battleship.App</mainClass>
+                    <mainClass>com.cenit.battleship.App</mainClass>
                 </configuration>
             </plugin>
 
@@ -85,7 +85,7 @@
                         <configuration>
                             <transformers>
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-                                    <mainClass>com.tuempresa.battleship.App</mainClass>
+                                    <mainClass>com.cenit.battleship.App</mainClass>
                                 </transformer>
                             </transformers>
                         </configuration>

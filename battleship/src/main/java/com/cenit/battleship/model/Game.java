@@ -36,7 +36,7 @@ public class Game {
             throw new IllegalStateException("No es el turno del jugador");
         }
         
-        ShotResult result = boardCPU.makeShot(coord);
+        ShotResult result = boardCPU.receiveShot(coord);
         verifyEndGame();
         
         if (!result.impact()) {
