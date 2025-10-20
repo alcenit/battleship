@@ -129,7 +129,7 @@ public class AchievementTracker {
             }
             
             // Verificar velocidad
-            int turns = gameController.getTurnosTranscurridos();
+            int turns = gameController.getElapsedTurns();
             if (turns <= 15) {
                 unlockAchievement(Achievement.SPEEDRUNNER);
             }

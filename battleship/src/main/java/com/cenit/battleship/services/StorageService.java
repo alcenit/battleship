@@ -7,7 +7,6 @@ package com.cenit.battleship.services;
 import com.cenit.battleship.controller.GameController;
 import com.cenit.battleship.model.*;
 import com.cenit.battleship.model.enums.CellState;
-import com.cenit.battleship.model.enums.GamePhase;
 import com.cenit.battleship.model.enums.ShipType;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -150,7 +149,7 @@ public class StorageService {
 
         // Información básica
         state.setSavedDate(new Date());
-        state.setElapsedTurns(gameController.getTurnosTranscurridos());
+        state.setElapsedTurns(gameController.getElapsedTurns());
 
         // Estado del juego
         state.setPlayerTurn(gameController.isPlayerTurn());
@@ -179,8 +178,8 @@ public class StorageService {
         GameController gameController = new GameController();
 
         // Restaurar información básica
-        gameController.setTurnosTranscurridos(state.getElapsedTurns());
-        gameController.setTurnoJugador(state.isPlayerTurn());
+        gameController.setElapsedTurns(state.getElapsedTurns());
+        gameController.setPlayerTurn(state.isPlayerTurn());
         gameController.setGamePhase(state.getGamePhase());
 
         // Restaurar barcos - necesitarás lógica específica
@@ -195,13 +194,13 @@ public class StorageService {
     // ========== MÉTODOS AUXILIARES DE SERIALIZACIÓN ==========
     private BoardState serializeBoard(Board board) {
         BoardState state = new BoardState();
-        state.setSize(board.getSize());
+        state.setSize(state.getSize());
 
         CellState[][] cellStates = new CellState[state.getSize()][state.getSize()];
         for (int i = 0; i < state.getSize(); i++) {
             for (int j = 0; j < state.getSize(); j++) {
                 // Necesitas un método getCellState en Board o Cell
-                // cellStates[i][j] = board.getCell(i, j).getState();
+                 cellStates[i][j] = board.getCell(i, j).getState();
             }
         }
         state.setCellStates(cellStates);

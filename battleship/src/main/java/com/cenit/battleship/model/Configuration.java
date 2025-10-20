@@ -1,10 +1,6 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package com.cenit.battleship.model;
 
-import com.cenit.battleship.controller.CPUController;
+import com.cenit.battleship.model.enums.Difficulty;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -14,7 +10,7 @@ import java.io.OutputStream;
 import java.util.Properties;
 
 /**
- *
+ * Clase singleton para gestionar la configuración del juego
  * @author Usuario
  */
 public class Configuration {
@@ -22,28 +18,32 @@ public class Configuration {
     private static Configuration instancia;
     
     // Propiedades de configuración
-    private CPUController.Difficulty CPUDifficulty;   
+    private Difficulty cpuDifficulty;   
     private boolean soundEnabled;
     private boolean animationsEnabled;
     private double soundVolume;
     private double gameSpeed;
     private String playerName;
+    private String gameMode;
     private boolean showHelp;
     private String visualTheme;
+    private String language;
     
     // Archivo de configuración
-    private static final String ARCHIVO_CONFIG = "config.properties";
+    private static final String CONFIG_FILE = "config.properties";
     private Properties properties;
     
     // Valores por defecto
-    private static final CPUController.Difficulty DIFICULTAD_DEFAULT = CPUController.Difficulty.NORMAL;
+    private static final Difficulty DEFAULT_DIFFICULTY = Difficulty.NORMAL;
     private static final boolean DEFAULT_SOUND = true;
     private static final boolean DEFAULT_ANIMATIONS = true;
     private static final double DEFAULT_VOLUME = 0.8;
-    private static final double DEFAULT_VELOCITY = 1.0;
-    private static final String DEFAULT_NAME = "PLAYER";
-    private static final boolean DEFAULT_HELPS = true;
+    private static final double DEFAULT_SPEED = 1.0;
+    private static final String DEFAULT_NAME = "Jugador";
+    private static final String DEFAULT_GAME_MODE = "Clásico";
+    private static final boolean DEFAULT_HELP = true;
     private static final String DEFAULT_THEME = "default";
+    private static final String DEFAULT_LANGUAGE = "es";
     
     private Configuration() {
         loadConfiguration();
@@ -61,127 +61,161 @@ public class Configuration {
     private void loadConfiguration() {
         properties = new Properties();
         
-        try (InputStream input = new FileInputStream(ARCHIVO_CONFIG)) {
+        try (InputStream input = new FileInputStream(CONFIG_FILE)) {
             properties.load(input);
             loadFromProperties();
+            System.out.println("✅ Configuración cargada desde: " + CONFIG_FILE);
         } catch (FileNotFoundException e) {
             // Archivo no existe, usar valores por defecto
-            System.out.println("Archivo de configuración no encontrado. Usando valores por defecto.");
+            System.out.println("📁 Archivo de configuración no encontrado. Usando valores por defecto.");
             useDefaultValues();
+            saveConfiguration(); // Crear archivo con valores por defecto
         } catch (IOException e) {
-            System.err.println("Error al cargar configuración: " + e.getMessage());
+            System.err.println("❌ Error al cargar configuración: " + e.getMessage());
             useDefaultValues();
         }
     }
     
     public void saveConfiguration() {
-        try (OutputStream output = new FileOutputStream(ARCHIVO_CONFIG)) {
-            saveInProperties();
+        try (OutputStream output = new FileOutputStream(CONFIG_FILE)) {
+            saveToProperties();
             properties.store(output, "Configuración del juego Battleship");
-            System.out.println("Configuración guardada exitosamente.");
+            System.out.println("💾 Configuración guardada en: " + CONFIG_FILE);
         } catch (IOException e) {
-            System.err.println("Error al guardar configuración: " + e.getMessage());
+            System.err.println("❌ Error al guardar configuración: " + e.getMessage());
         }
     }
     
     private void loadFromProperties() {
         try {
-            // Dificultad
-            String dificultyStr = properties.getProperty("dificultad", "NORMAL");
-            this.CPUDifficulty = CPUController.Difficulty.valueOf(dificultyStr);
+            // Dificultad de la CPU
+            String difficultyStr = properties.getProperty("cpuDifficulty", "NORMAL");
+            this.cpuDifficulty = Difficulty.valueOf(difficultyStr);
             
             // Sonido
-            this.soundEnabled = Boolean.parseBoolean(properties.getProperty("sonido", "true"));
-            this.soundVolume = Double.parseDouble(properties.getProperty("volumen", "0.8"));
+            this.soundEnabled = Boolean.parseBoolean(properties.getProperty("soundEnabled", "true"));
+            this.soundVolume = Double.parseDouble(properties.getProperty("soundVolume", "0.8"));
             
             // Animaciones
-            this.animationsEnabled = Boolean.parseBoolean(properties.getProperty("animaciones", "true"));
-            this.gameSpeed = Double.parseDouble(properties.getProperty("velocidad", "1.0"));
+            this.animationsEnabled = Boolean.parseBoolean(properties.getProperty("animationsEnabled", "true"));
+            this.gameSpeed = Double.parseDouble(properties.getProperty("gameSpeed", "1.0"));
             
             // Jugador
-            this.playerName = properties.getProperty("nombre", "Jugador");
-            this.showHelp = Boolean.parseBoolean(properties.getProperty("ayudas", "true"));
+            this.playerName = properties.getProperty("playerName", "Jugador");
+            this.gameMode = properties.getProperty("gameMode", "Clásico");
+            this.showHelp = Boolean.parseBoolean(properties.getProperty("showHelp", "true"));
             
-            // Tema visual
-            this.visualTheme = properties.getProperty("tema", "default");
+            // Interfaz
+            this.visualTheme = properties.getProperty("visualTheme", "default");
+            this.language = properties.getProperty("language", "es");
             
         } catch (Exception e) {
-            System.err.println("Error al parsear configuración: " + e.getMessage());
+            System.err.println("❌ Error al parsear configuración: " + e.getMessage());
             useDefaultValues();
         }
     }
     
-    private void saveInProperties() {
-        properties.setProperty("dificultad", CPUDifficulty.name());
-        properties.setProperty("sonido", String.valueOf(soundEnabled));
-        properties.setProperty("volumen", String.valueOf(soundVolume));
-        properties.setProperty("animaciones", String.valueOf(animationsEnabled));
-        properties.setProperty("velocidad", String.valueOf(gameSpeed));
-        properties.setProperty("nombre", playerName);
-        properties.setProperty("ayudas", String.valueOf(showHelp));
-        properties.setProperty("tema", visualTheme);
+    private void saveToProperties() {
+        // Dificultad y modo de juego
+        properties.setProperty("cpuDifficulty", cpuDifficulty.name());
+        properties.setProperty("gameMode", gameMode);
+        
+        // Sonido
+        properties.setProperty("soundEnabled", String.valueOf(soundEnabled));
+        properties.setProperty("soundVolume", String.valueOf(soundVolume));
+        
+        // Animaciones
+        properties.setProperty("animationsEnabled", String.valueOf(animationsEnabled));
+        properties.setProperty("gameSpeed", String.valueOf(gameSpeed));
+        
+        // Jugador
+        properties.setProperty("playerName", playerName);
+        properties.setProperty("showHelp", String.valueOf(showHelp));
+        
+        // Interfaz
+        properties.setProperty("visualTheme", visualTheme);
+        properties.setProperty("language", language);
     }
     
     private void useDefaultValues() {
-        this.CPUDifficulty = DIFICULTAD_DEFAULT;
+        this.cpuDifficulty = DEFAULT_DIFFICULTY;
         this.soundEnabled = DEFAULT_SOUND;
         this.animationsEnabled = DEFAULT_ANIMATIONS;
         this.soundVolume = DEFAULT_VOLUME;
-        this.gameSpeed = DEFAULT_VELOCITY;
+        this.gameSpeed = DEFAULT_SPEED;
         this.playerName = DEFAULT_NAME;
-        this.showHelp = DEFAULT_HELPS;
+        this.gameMode = DEFAULT_GAME_MODE;
+        this.showHelp = DEFAULT_HELP;
         this.visualTheme = DEFAULT_THEME;
+        this.language = DEFAULT_LANGUAGE;
     }
     
     // ========== GETTERS Y SETTERS ==========
     
-    public CPUController.Difficulty getCpuDifficulty() {
-        return CPUDifficulty;
+    public Difficulty getCpuDifficulty() {
+        return cpuDifficulty;
     }
     
-    public void setCpuDifficulty(CPUController.Difficulty difficultyCPU) {
-        this.CPUDifficulty = difficultyCPU;
+    public void setCpuDifficulty(Difficulty difficulty) {
+        this.cpuDifficulty = difficulty;
+        System.out.println("🎯 Dificultad establecida: " + difficulty);
     }
     
     public boolean isSoundEnabled() {
         return soundEnabled;
     }
     
-    public void setSoundEnabled(boolean sonidoHabilitado) {
-        this.soundEnabled = sonidoHabilitado;
+    public void setSoundEnabled(boolean enabled) {
+        this.soundEnabled = enabled;
+        System.out.println("🔊 Sonido " + (enabled ? "habilitado" : "deshabilitado"));
     }
     
     public boolean isAnimationsEnabled() {
         return animationsEnabled;
     }
     
-    public void setAnimationsEnabled(boolean animacionesHabilitadas) {
-        this.animationsEnabled = animacionesHabilitadas;
+    public void setAnimationsEnabled(boolean enabled) {
+        this.animationsEnabled = enabled;
+        System.out.println("🎬 Animaciones " + (enabled ? "habilitadas" : "deshabilitadas"));
     }
     
     public double getSoundVolume() {
         return soundVolume;
     }
     
-    public void setSoundVolume(double volumenSonido) {
-        this.soundVolume = Math.max(0.0, Math.min(1.0, volumenSonido));
+    public void setSoundVolume(double volume) {
+        this.soundVolume = Math.max(0.0, Math.min(1.0, volume));
+        System.out.println("🔊 Volumen establecido: " + (int)(soundVolume * 100) + "%");
     }
     
     public double getGameSpeed() {
         return gameSpeed;
     }
     
-    public void setGameSpeed(double velocidadJuego) {
-        this.gameSpeed = Math.max(0.1, Math.min(2.0, velocidadJuego));
+    public void setGameSpeed(double speed) {
+        this.gameSpeed = Math.max(0.1, Math.min(2.0, speed));
+        System.out.println("⚡ Velocidad del juego: " + (int)(gameSpeed * 100) + "%");
     }
     
     public String getPlayerName() {
         return playerName;
     }
     
-    public void setPlayerName(String nombreJugador) {
-        if (nombreJugador != null && !nombreJugador.trim().isEmpty()) {
-            this.playerName = nombreJugador.trim();
+    public void setPlayerName(String name) {
+        if (name != null && !name.trim().isEmpty()) {
+            this.playerName = name.trim();
+            System.out.println("👤 Nombre del jugador: " + playerName);
+        }
+    }
+    
+    public String getGameMode() {
+        return gameMode;
+    }
+    
+    public void setGameMode(String mode) {
+        if (mode != null && !mode.trim().isEmpty()) {
+            this.gameMode = mode.trim();
+            System.out.println("🎮 Modo de juego: " + gameMode);
         }
     }
     
@@ -189,24 +223,37 @@ public class Configuration {
         return showHelp;
     }
     
-    public void setShowHelp(boolean mostrarAyudas) {
-        this.showHelp = mostrarAyudas;
+    public void setShowHelp(boolean show) {
+        this.showHelp = show;
+        System.out.println("💡 Ayudas " + (show ? "habilitadas" : "deshabilitadas"));
     }
     
     public String getVisualTheme() {
         return visualTheme;
     }
     
-    public void setVisualTheme(String visualthemeSt) {
-        if (visualthemeSt != null && !visualthemeSt.trim().isEmpty()) {
-            this.visualTheme = visualthemeSt.trim();
+    public void setVisualTheme(String theme) {
+        if (theme != null && !theme.trim().isEmpty()) {
+            this.visualTheme = theme.trim();
+            System.out.println("🎨 Tema visual: " + visualTheme);
+        }
+    }
+    
+    public String getLanguage() {
+        return language;
+    }
+    
+    public void setLanguage(String lang) {
+        if (lang != null && !lang.trim().isEmpty()) {
+            this.language = lang.trim();
+            System.out.println("🌐 Idioma: " + language);
         }
     }
     
     // ========== MÉTODOS DE UTILIDAD ==========
     
     public String getDifficultyDescription() {
-        switch (CPUDifficulty) {
+        switch (cpuDifficulty) {
             case EASY:
                 return "Fácil - Ideal para principiantes";
             case NORMAL:
@@ -220,54 +267,189 @@ public class Configuration {
         }
     }
     
-    public double getBaseAnimationDuration() {
-        // Duración base ajustada por velocidad
-        return 1000.0 / gameSpeed; // milisegundos
+    public String getDifficultyDisplayName() {
+        switch (cpuDifficulty) {
+            case EASY: return "Fácil";
+            case NORMAL: return "Normal";
+            case HARD: return "Difícil";
+            case EXPERT: return "Experto";
+            default: return "Normal";
+        }
     }
     
-    public void ResetSettings() {
+    public double getBaseAnimationDuration() {
+        // Duración base ajustada por velocidad (milisegundos)
+        return 1000.0 / gameSpeed;
+    }
+    
+    public void resetToDefaults() {
+        System.out.println("🔄 Restableciendo configuración a valores por defecto...");
         useDefaultValues();
         saveConfiguration();
     }
     
-    public void showSettings() {
+    public void showCurrentSettings() {
         System.out.println("=== CONFIGURACIÓN ACTUAL ===");
-        System.out.println("Dificultad: " + CPUDifficulty + " - " + getDifficultyDescription());
-        System.out.println("Sonido: " + (soundEnabled ? "Habilitado" : "Deshabilitado"));
-        System.out.println("Volumen: " + (int)(soundVolume * 100) + "%");
-        System.out.println("Animaciones: " + (animationsEnabled ? "Habilitadas" : "Deshabilitadas"));
-        System.out.println("Velocidad: " + (int)(gameSpeed * 100) + "%");
-        System.out.println("Nombre: " + playerName);
-        System.out.println("Ayudas: " + (showHelp ? "Habilitadas" : "Deshabilitadas"));
-        System.out.println("Tema: " + visualTheme);
+        System.out.println("🎯 Dificultad: " + cpuDifficulty + " - " + getDifficultyDescription());
+        System.out.println("🔊 Sonido: " + (soundEnabled ? "HABILITADO" : "DESHABILITADO"));
+        System.out.println("📊 Volumen: " + (int)(soundVolume * 100) + "%");
+        System.out.println("🎬 Animaciones: " + (animationsEnabled ? "HABILITADAS" : "DESHABILITADAS"));
+        System.out.println("⚡ Velocidad: " + (int)(gameSpeed * 100) + "%");
+        System.out.println("👤 Jugador: " + playerName);
+        System.out.println("🎮 Modo: " + gameMode);
+        System.out.println("💡 Ayudas: " + (showHelp ? "HABILITADAS" : "DESHABILITADAS"));
+        System.out.println("🎨 Tema: " + visualTheme);
+        System.out.println("🌐 Idioma: " + language);
         System.out.println("=============================");
     }
     
     // ========== CONFIGURACIONES PREDEFINIDAS ==========
     
     public void configureBeginnerMode() {
-        this.CPUDifficulty = CPUController.Difficulty.EASY;
+        System.out.println("👶 Configurando modo Principiante...");
+        this.cpuDifficulty = Difficulty.EASY;
         this.showHelp = true;
         this.gameSpeed = 0.8;
+        this.soundVolume = 0.7;
         saveConfiguration();
+        System.out.println("✅ Modo Principiante configurado");
+    }
+    
+    public void configureNormalMode() {
+        System.out.println("🎯 Configurando modo Normal...");
+        this.cpuDifficulty = Difficulty.NORMAL;
+        this.showHelp = true;
+        this.gameSpeed = 1.0;
+        this.soundVolume = 0.8;
+        saveConfiguration();
+        System.out.println("✅ Modo Normal configurado");
+    }
+    
+    public void configureHardMode() {
+        System.out.println("🚀 Configurando modo Difícil...");
+        this.cpuDifficulty = Difficulty.HARD;
+        this.showHelp = false;
+        this.gameSpeed = 1.2;
+        this.soundVolume = 0.9;
+        saveConfiguration();
+        System.out.println("✅ Modo Difícil configurado");
     }
     
     public void configureExpertMode() {
-        this.CPUDifficulty = CPUController.Difficulty.EXPERT;
+        System.out.println("💀 Configurando modo Experto...");
+        this.cpuDifficulty = Difficulty.EXPERT;
         this.showHelp = false;
-        this.gameSpeed = 1.2;
+        this.gameSpeed = 1.5;
+        this.soundVolume = 1.0;
         saveConfiguration();
+        System.out.println("✅ Modo Experto configurado");
     }
     
     public void configureCompetitiveMode() {
-        this.CPUDifficulty = CPUController.Difficulty.HARD;
+        System.out.println("🏆 Configurando modo Competitivo...");
+        this.cpuDifficulty = Difficulty.HARD;
         this.showHelp = false;
         this.animationsEnabled = true;
         this.gameSpeed = 1.0;
+        this.soundVolume = 0.9;
         saveConfiguration();
+        System.out.println("✅ Modo Competitivo configurado");
     }
-}    
     
+    public void configureCasualMode() {
+        System.out.println("😊 Configurando modo Casual...");
+        this.cpuDifficulty = Difficulty.EASY;
+        this.showHelp = true;
+        this.animationsEnabled = true;
+        this.gameSpeed = 0.9;
+        this.soundVolume = 0.6;
+        saveConfiguration();
+        System.out.println("✅ Modo Casual configurado");
+    }
+    
+    // ========== MÉTODOS DE VALIDACIÓN ==========
+    
+    public boolean isValidPlayerName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return false;
+        }
+        
+        String trimmedName = name.trim();
+        
+        // Longitud válida (2-20 caracteres)
+        if (trimmedName.length() < 2 || trimmedName.length() > 20) {
+            return false;
+        }
+        
+        // Solo letras, números y espacios
+        if (!trimmedName.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ0-9 ]+$")) {
+            return false;
+        }
+        
+        // No solo espacios
+        if (trimmedName.replaceAll("\\s+", "").isEmpty()) {
+            return false;
+        }
+        
+        return true;
+    }
+    
+    // ========== MÉTODOS PARA OBTENER CONFIGURACIONES ESPECÍFICAS ==========
+    
+    public Properties getSoundSettings() {
+        Properties soundProps = new Properties();
+        soundProps.setProperty("enabled", String.valueOf(soundEnabled));
+        soundProps.setProperty("volume", String.valueOf(soundVolume));
+        return soundProps;
+    }
+    
+    public Properties getDisplaySettings() {
+        Properties displayProps = new Properties();
+        displayProps.setProperty("animationsEnabled", String.valueOf(animationsEnabled));
+        displayProps.setProperty("gameSpeed", String.valueOf(gameSpeed));
+        displayProps.setProperty("visualTheme", visualTheme);
+        displayProps.setProperty("showHelp", String.valueOf(showHelp));
+        return displayProps;
+    }
+    
+    public Properties getGameSettings() {
+        Properties gameProps = new Properties();
+        gameProps.setProperty("cpuDifficulty", cpuDifficulty.name());
+        gameProps.setProperty("gameMode", gameMode);
+        gameProps.setProperty("playerName", playerName);
+        return gameProps;
+    }
+    
+    // ========== MÉTODOS PARA IMPORTAR/EXPORTAR CONFIGURACIÓN ==========
+    
+    public void importConfiguration(Properties importedProps) {
+        try {
+            if (importedProps.containsKey("cpuDifficulty")) {
+                this.cpuDifficulty = Difficulty.valueOf(importedProps.getProperty("cpuDifficulty"));
+            }
+            if (importedProps.containsKey("soundEnabled")) {
+                this.soundEnabled = Boolean.parseBoolean(importedProps.getProperty("soundEnabled"));
+            }
+            if (importedProps.containsKey("soundVolume")) {
+                this.soundVolume = Double.parseDouble(importedProps.getProperty("soundVolume"));
+            }
+            // ... importar otras propiedades
+            
+            saveConfiguration();
+            System.out.println("✅ Configuración importada exitosamente");
+            
+        } catch (Exception e) {
+            System.err.println("❌ Error al importar configuración: " + e.getMessage());
+        }
+    }
+    
+    public Properties exportConfiguration() {
+        Properties exportProps = new Properties();
+        saveToProperties(); // Usar el mismo método de guardado
+        exportProps.putAll(properties);
+        return exportProps;
+    }
+}
     
     
 

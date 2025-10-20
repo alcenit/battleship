@@ -5,8 +5,8 @@
 package com.cenit.battleship.view;
 
 import com.cenit.battleship.App;
-import com.cenit.battleship.controller.CPUController;
 import com.cenit.battleship.model.Configuration;
+import com.cenit.battleship.model.enums.Difficulty;
 import java.net.URL;
 import java.util.ResourceBundle;
 import javafx.fxml.FXML;
@@ -109,41 +109,129 @@ public class ConfigurationViewController implements Initializable {
     }
 
     private void saveConfiguration() {
-        // Dificultad
-        switch(DifficultyCombo.getValue()) {
-            case "Fácil": config.setCpuDifficulty(CPUController.Difficulty.EASY); break;
-            case "Normal": config.setCpuDifficulty(CPUController.Difficulty.NORMAL); break;
-            case "Difícil": config.setCpuDifficulty(CPUController.Difficulty.HARD); break;
-            case "Experto": config.setCpuDifficulty(CPUController.Difficulty.EXPERT); break;
-        }
+    try {
+        System.out.println("💾 Guardando configuración...");
         
-        // Sonido
+        // Validar y configurar dificultad
+        configureDifficulty();
+        
+        // Configuración de sonido
         config.setSoundEnabled(checkSound.isSelected());
-        config.setSoundVolume(sliderVolume.getValue() / 100.0);
+        config.setSoundVolume(validateVolume(sliderVolume.getValue()));
         
-        // Animaciones y velocidad
+        // Configuración de animaciones
         config.setAnimationsEnabled(checkAnimations.isSelected());
-        config.setGameSpeed(sliderVelocity.getValue() / 100.0);
+        config.setGameSpeed(validateGameSpeed(sliderVelocity.getValue()));
         
-        // Jugador
-        config.setPlayerName(txtName.getText());
-        config.setShowHelp(checkHelps.isSelected());
+        // Configuración de jugador
+        configurePlayerSettings();
         
-        // Tema
-        config.setVisualTheme(themeCombo.getValue());
+        // Configuración de tema visual
+        configureVisualTheme();
         
-        // Guardar en archivo
+        // Guardar configuración - método void
         config.saveConfiguration();
+        System.out.println("✅ Configuración guardada exitosamente");
         
-        // Mostrar mensaje de confirmación
-        showMessage("Configuración guardada exitosamente", "La configuración se ha guardado correctamente.");
+        showSuccessMessage();
+        navigateToMainView();
         
-        try {
-            App.changeView("view/MainView");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
+    } catch (Exception ex) {
+        handleSaveError(ex);
     }
+}
+
+private void configureDifficulty() {
+    String selectedDifficulty = DifficultyCombo.getValue();
+    System.out.println("🎯 Configurando dificultad: " + selectedDifficulty);
+    
+    switch(selectedDifficulty) {
+        case "Fácil": 
+            config.setCpuDifficulty(Difficulty.EASY);
+            break;
+        case "Normal": 
+            config.setCpuDifficulty(Difficulty.NORMAL);
+            break;
+        case "Difícil": 
+            config.setCpuDifficulty(Difficulty.HARD);
+            break;
+        case "Experto": 
+            config.setCpuDifficulty(Difficulty.EXPERT);
+            break;
+        default:
+            config.setCpuDifficulty(Difficulty.NORMAL);
+            System.out.println("⚠️  Dificultad no reconocida, usando Normal por defecto");
+            break;
+    }
+}
+
+private void configurePlayerSettings() {
+    String playerName = txtName.getText().trim();
+    if (playerName.isEmpty()) {
+        playerName = "Comandante";
+        System.out.println("👤 Usando nombre por defecto: " + playerName);
+    } else if (!isValidPlayerName(playerName)) {
+        showMessage("Nombre inválido", 
+            "El nombre debe tener entre 2-15 caracteres y solo letras/espacios.");
+        playerName = "Comandante";
+    }
+    
+    config.setPlayerName(playerName);
+    config.setShowHelp(checkHelps.isSelected());
+    
+    System.out.println("👤 Jugador: " + playerName + ", Ayudas: " + checkHelps.isSelected());
+}
+
+private void configureVisualTheme() {
+    String theme = themeCombo.getValue();
+    if (theme != null && !theme.trim().isEmpty()) {
+        config.setVisualTheme(theme);
+        System.out.println("🎨 Tema configurado: " + theme);
+    } else {
+        config.setVisualTheme("Clásico");
+        System.out.println("🎨 Usando tema por defecto: Clásico");
+    }
+}
+
+private double validateVolume(double volume) {
+    return Math.max(0.0, Math.min(1.0, volume / 100.0));
+}
+
+private double validateGameSpeed(double speed) {
+    return Math.max(0.1, Math.min(1.0, speed / 100.0));
+}
+
+private boolean isValidPlayerName(String name) {
+    return name != null && 
+           name.length() >= 2 && 
+           name.length() <= 15 && 
+           name.matches("^[a-zA-ZáéíóúÁÉÍÓÚñÑ ]+$");
+}
+
+private void showSuccessMessage() {
+    showMessage("Configuración guardada", 
+        "La configuración se ha guardado correctamente.\n\n" +
+        "• Dificultad: " + DifficultyCombo.getValue() + "\n" +
+        "• Jugador: " + config.getPlayerName() + "\n" +
+        "• Sonido: " + (config.isSoundEnabled() ? "Activado" : "Desactivado"));
+}
+
+private void navigateToMainView() {
+    try {
+        App.changeView("view/MainView");
+    } catch (Exception ex) {
+        System.err.println("⚠️ Error navegando al menú principal: " + ex.getMessage());
+        // No mostrar error al usuario en este caso
+    }
+}
+
+private void handleSaveError(Exception ex) {
+    System.err.println("❌ Error crítico guardando configuración: " + ex.getMessage());
+    ex.printStackTrace();
+    showMessage("Error al guardar", 
+        "No se pudo guardar la configuración:\n" + ex.getMessage() + 
+        "\n\nPor favor verifica que tengas permisos de escritura.");
+}
 
     private void restoreDefaults() {
         Alert alert = new Alert(Alert.AlertType.CONFIRMATION);
@@ -153,7 +241,7 @@ public class ConfigurationViewController implements Initializable {
         
         alert.showAndWait().ifPresent(response -> {
             if (response == ButtonType.OK) {
-                config.ResetSettings();
+                config.resetToDefaults();
                 loadCurrentConfiguration();
                 showMessage("Configuración restaurada", "Se han restaurado los valores predeterminados.");
             }

@@ -27,6 +27,8 @@
    <VBox alignment="CENTER" spacing="15">
       <Label text="Modo de Juego:" styleClass="subtitle-label"/>
       <ComboBox fx:id="comboModeGame" prefWidth="200"/>
+      <Label text="Dificultad:" styleClass="subtitle-label"/>
+      <ComboBox fx:id="comboDifficulty" prefWidth="200"/>
    </VBox>
    
    <VBox alignment="CENTER" spacing="10">

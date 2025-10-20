@@ -1,4 +1,3 @@
-
 package com.cenit.battleship.model;
 
 import com.cenit.battleship.controller.GameController;
@@ -7,8 +6,9 @@ import java.util.*;
 import java.io.Serializable;
 
 public class PlayerProfile implements Serializable {
+
     private static final long serialVersionUID = 1L;
-    
+
     private String playerId;
     private String playerName;
     private String avatar;
@@ -24,11 +24,11 @@ public class PlayerProfile implements Serializable {
     private List<String> unlockedThemes;
 
     // ========== CONSTRUCTORES ==========
-
     public PlayerProfile(String playerName) {
         this(UUID.randomUUID().toString(), playerName, "🚢", new Date());
     }
-    public PlayerProfile(String playerName,String avatar) {
+
+    public PlayerProfile(String playerName, String avatar) {
         this(UUID.randomUUID().toString(), playerName, "🚢", new Date());
     }
 
@@ -50,8 +50,7 @@ public class PlayerProfile implements Serializable {
         initializeDefaultUnlocks();
     }
 
-        // ========== INICIALIZACIÓN ==========
-
+    // ========== INICIALIZACIÓN ==========
     private void initializeDefaultPreferences() {
         preferences.put("soundEnabled", true);
         preferences.put("musicEnabled", true);
@@ -70,16 +69,15 @@ public class PlayerProfile implements Serializable {
     }
 
     // ========== GESTIÓN DE LOGROS ==========
-
     public boolean unlockAchievement(Achievement achievement) {
         if (!unlockedAchievements.contains(achievement)) {
             unlockedAchievements.add(achievement);
             totalScore += achievement.getPoints();
             addExperience(achievement.getPoints() * 10);
-            
+
             System.out.println("🎉 Logro desbloqueado: " + achievement.getName());
             System.out.println("➕ " + achievement.getPoints() + " puntos obtenidos");
-            
+
             return true;
         }
         return false;
@@ -102,26 +100,27 @@ public class PlayerProfile implements Serializable {
     }
 
     // ========== SISTEMA DE NIVELES ==========
-
     public void addExperience(int exp) {
-        if (exp <= 0) return;
-        
+        if (exp <= 0) {
+            return;
+        }
+
         experiencePoints += exp;
         System.out.println("➕ " + exp + " EXP obtenida. Total: " + experiencePoints);
-        
+
         checkLevelUp();
     }
 
     private void checkLevelUp() {
         int expRequired = getExperienceForNextLevel();
-        
+
         while (experiencePoints >= expRequired && currentLevel < getMaxLevel()) {
             experiencePoints -= expRequired;
             currentLevel++;
-            
+
             // Recompensas por subir de nivel
             grantLevelUpRewards();
-            
+
             expRequired = getExperienceForNextLevel();
             System.out.println("🎊 ¡Nivel " + currentLevel + " alcanzado!");
         }
@@ -147,7 +146,7 @@ public class PlayerProfile implements Serializable {
                 System.out.println("🎁 ¡Nuevo tema desbloqueado: PREMIUM!");
                 break;
         }
-        
+
         // Puntos adicionales cada 5 niveles
         if (currentLevel % 5 == 0) {
             totalScore += 50;
@@ -169,21 +168,22 @@ public class PlayerProfile implements Serializable {
         int expForCurrent = getExperienceForLevel(currentLevel);
         int expInLevel = experiencePoints - expForCurrent;
         int expNeeded = expForNext - expForCurrent;
-        
+
         return expNeeded > 0 ? (double) expInLevel / expNeeded : 0.0;
     }
 
     private int getExperienceForLevel(int level) {
-        if (level <= 1) return 0;
+        if (level <= 1) {
+            return 0;
+        }
         return (int) (100 * Math.pow(level - 1, 1.5));
     }
 
     // ========== ACTUALIZACIÓN DE ESTADÍSTICAS ==========
-
     public void updateFromGame(GameController gameController, boolean won) {
         lastPlayed = new Date();
         statistics.recordGameStart();
-        
+
         if (won) {
             statistics.recordGameWin();
             grantVictoryRewards(gameController);
@@ -191,10 +191,10 @@ public class PlayerProfile implements Serializable {
         } else {
             statistics.recordGameLoss();
         }
-        
+
         // Registrar disparos y hundimientos
         recordGameStatistics(gameController);
-        
+
         // Verificar logros de progresión
         checkProgressionAchievements();
     }
@@ -203,10 +203,10 @@ public class PlayerProfile implements Serializable {
         int baseExp = 50;
         int bonusExp = gameController.getRemainingPlayerShips() * 10; // Bonus por barcos intactos
         int totalExp = baseExp + bonusExp;
-        
+
         addExperience(totalExp);
         totalScore += 25; // Puntos base por victoria
-        
+
         System.out.println("🏆 Victoria! +" + totalExp + " EXP, +25 puntos");
     }
 
@@ -216,17 +216,16 @@ public class PlayerProfile implements Serializable {
     }
 
     // ========== VERIFICACIÓN DE LOGROS ==========
-
     private void checkVictoryAchievements() {
         // Logros basados en victorias
         if (statistics.getCurrentWinStreak() >= 5 && !hasAchievement(Achievement.STREAKER)) {
             unlockAchievement(Achievement.STREAKER);
         }
-        
+
         if (statistics.getGamesWon() == 1 && !hasAchievement(Achievement.FIRST_BLOOD)) {
             unlockAchievement(Achievement.FIRST_BLOOD);
         }
-        
+
         // Juego perfecto (ningún barco perdido)
         // if (gameController.getRemainingPlayerShips() == gameController.getPlayerShips().size()) {
         //     unlockAchievement(Achievement.PERFECT_GAME);
@@ -238,18 +237,17 @@ public class PlayerProfile implements Serializable {
         if (statistics.getGamesPlayed() >= 10 && !hasAchievement(Achievement.VETERAN)) {
             unlockAchievement(Achievement.VETERAN);
         }
-        
+
         if (statistics.getAccuracy() >= 80.0 && !hasAchievement(Achievement.SHARPSHOOTER)) {
             unlockAchievement(Achievement.SHARPSHOOTER);
         }
-        
+
         if (currentLevel >= 25 && !hasAchievement(Achievement.UNSTOPPABLE)) {
             unlockAchievement(Achievement.UNSTOPPABLE);
         }
     }
 
     // ========== GESTIÓN DE PREFERENCIAS ==========
-
     public void setPreference(String key, Object value) {
         preferences.put(key, value);
     }
@@ -273,7 +271,6 @@ public class PlayerProfile implements Serializable {
     }
 
     // ========== GESTIÓN DE DESBLOQUEOS ==========
-
     public boolean unlockShip(String shipType) {
         if (!unlockedShips.contains(shipType)) {
             unlockedShips.add(shipType);
@@ -299,29 +296,38 @@ public class PlayerProfile implements Serializable {
     }
 
     // ========== MÉTODOS DE INFORMACIÓN ==========
-
     public String getRank() {
-        if (currentLevel >= 80) return "Almirante Legendario";
-        if (currentLevel >= 60) return "Almirante Experto";
-        if (currentLevel >= 40) return "Capitán Veterano";
-        if (currentLevel >= 20) return "Teniente";
-        if (currentLevel >= 10) return "Alférez";
+        if (currentLevel >= 80) {
+            return "Almirante Legendario";
+        }
+        if (currentLevel >= 60) {
+            return "Almirante Experto";
+        }
+        if (currentLevel >= 40) {
+            return "Capitán Veterano";
+        }
+        if (currentLevel >= 20) {
+            return "Teniente";
+        }
+        if (currentLevel >= 10) {
+            return "Alférez";
+        }
         return "Marinero";
     }
 
     public String getPlayerSummary() {
         return String.format(
-            "👤 %s (%s)\n" +
-            "⭐ Nivel %d | %s\n" +
-            "🏆 Puntos: %,d | EXP: %,d/%,d\n" +
-            "📊 Partidas: %d | Victorias: %d (%.1f%%)\n" +
-            "🎯 Precisión: %.1f%% | Barcos hundidos: %d\n" +
-            "🏅 Logros: %d/%d (%.1f%%)",
-            playerName, getRank(), currentLevel,
-            totalScore, experiencePoints, getExperienceForNextLevel(),
-            statistics.getGamesPlayed(), statistics.getGamesWon(), statistics.getWinPercentage(),
-            statistics.getAccuracy(), statistics.getShipsSunk(),
-            getAchievementCount(), getTotalAchievements(), getAchievementProgress()
+                "👤 %s (%s)\n"
+                + "⭐ Nivel %d | %s\n"
+                + "🏆 Puntos: %,d | EXP: %,d/%,d\n"
+                + "📊 Partidas: %d | Victorias: %d (%.1f%%)\n"
+                + "🎯 Precisión: %.1f%% | Barcos hundidos: %d\n"
+                + "🏅 Logros: %d/%d (%.1f%%)",
+                playerName, getRank(), currentLevel,
+                totalScore, experiencePoints, getExperienceForNextLevel(),
+                statistics.getGamesPlayed(), statistics.getGamesWon(), statistics.getWinPercentage(),
+                statistics.getAccuracy(), statistics.getShipsSunk(),
+                getAchievementCount(), getTotalAchievements(), getAchievementProgress()
         );
     }
 
@@ -340,12 +346,11 @@ public class PlayerProfile implements Serializable {
         data.put("shipsUnlocked", unlockedShips.size());
         data.put("themesUnlocked", unlockedThemes.size());
         data.put("statistics", statistics.getDetailedStats());
-        
+
         return data;
     }
 
     // ========== MÉTODOS DE UTILIDAD ==========
-
     public void resetStatistics() {
         statistics.reset();
         totalScore = 0;
@@ -358,59 +363,111 @@ public class PlayerProfile implements Serializable {
     public void mergeProfile(PlayerProfile other) {
         // Fusionar estadísticas
         this.statistics.merge(other.statistics);
-        
+
         // Fusionar logros
         this.unlockedAchievements.addAll(other.unlockedAchievements);
-        
+
         // Tomar el mayor nivel y puntuación
         this.totalScore = Math.max(this.totalScore, other.totalScore);
         this.currentLevel = Math.max(this.currentLevel, other.currentLevel);
         this.experiencePoints = Math.max(this.experiencePoints, other.experiencePoints);
-        
+
         // Fusionar desbloqueos
         this.unlockedShips.addAll(other.unlockedShips);
         this.unlockedThemes.addAll(other.unlockedThemes);
     }
 
     // ========== GETTERS Y SETTERS ==========
+    public String getPlayerId() {
+        return playerId;
+    }
 
-    public String getPlayerId() { return playerId; }
-    public String getPlayerName() { return playerName; }
-    public void setPlayerName(String playerName) { this.playerName = playerName; }
-    
-    public String getAvatar() { return avatar; }
-    public void setAvatar(String avatar) { this.avatar = avatar; }
-    
-    public Date getCreationDate() { return creationDate; }
-    public Date getLastPlayed() { return lastPlayed; }
-    public void setLastPlayed(Date lastPlayed) { this.lastPlayed = lastPlayed; }
-    
-    public GameStatistics getStatistics() { return statistics; }
-    public Set<Achievement> getUnlockedAchievements() { return new HashSet<>(unlockedAchievements); }
-    
-    public int getTotalScore() { return totalScore; }
-    public void setTotalScore(int totalScore) { this.totalScore = totalScore; }
-    
-    public int getCurrentLevel() { return currentLevel; }
-    public void setCurrentLevel(int currentLevel) { this.currentLevel = currentLevel; }
-    
-    public int getExperiencePoints() { return experiencePoints; }
-    public void setExperiencePoints(int experiencePoints) { this.experiencePoints = experiencePoints; }
-    
-    public Map<String, Object> getPreferences() { return new HashMap<>(preferences); }
-    public List<String> getUnlockedShips() { return new ArrayList<>(unlockedShips); }
-    public List<String> getUnlockedThemes() { return new ArrayList<>(unlockedThemes); }
+    public String getPlayerName() {
+        return playerName;
+    }
+
+    public void setPlayerName(String playerName) {
+        this.playerName = playerName;
+    }
+
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    public Date getCreationDate() {
+        return creationDate;
+    }
+
+    public Date getLastPlayed() {
+        return lastPlayed;
+    }
+
+    public void setLastPlayed(Date lastPlayed) {
+        this.lastPlayed = lastPlayed;
+    }
+
+    public GameStatistics getStatistics() {
+        return statistics;
+    }
+
+    public Set<Achievement> getUnlockedAchievements() {
+        return new HashSet<>(unlockedAchievements);
+    }
+
+    public int getTotalScore() {
+        return totalScore;
+    }
+
+    public void setTotalScore(int totalScore) {
+        this.totalScore = totalScore;
+    }
+
+    public int getCurrentLevel() {
+        return currentLevel;
+    }
+
+    public void setCurrentLevel(int currentLevel) {
+        this.currentLevel = currentLevel;
+    }
+
+    public int getExperiencePoints() {
+        return experiencePoints;
+    }
+
+    public void setExperiencePoints(int experiencePoints) {
+        this.experiencePoints = experiencePoints;
+    }
+
+    public Map<String, Object> getPreferences() {
+        return new HashMap<>(preferences);
+    }
+
+    public List<String> getUnlockedShips() {
+        return new ArrayList<>(unlockedShips);
+    }
+
+    public List<String> getUnlockedThemes() {
+        return new ArrayList<>(unlockedThemes);
+    }
 
     @Override
     public String toString() {
-        return String.format("PlayerProfile{name='%s', level=%d, score=%,d}", 
-            playerName, currentLevel, totalScore);
+        return String.format("PlayerProfile{name='%s', level=%d, score=%,d}",
+                playerName, currentLevel, totalScore);
     }
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (this == o) {
+            return true;
+        }
+        if (o == null || getClass() != o.getClass()) {
+            return false;
+        }
         PlayerProfile that = (PlayerProfile) o;
         return Objects.equals(playerId, that.playerId);
     }
@@ -420,8 +477,3 @@ public class PlayerProfile implements Serializable {
         return Objects.hash(playerId);
     }
 }
-    
-    
-    
-    
-
