@@ -5,7 +5,7 @@
 package com.cenit.battleship.view;
 
 import com.cenit.battleship.App;
-import com.cenit.battleship.model.Configuration;
+import com.cenit.battleship.model.GameConfiguration;
 import com.cenit.battleship.model.enums.Difficulty;
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -39,11 +39,11 @@ public class ConfigurationViewController implements Initializable {
     @FXML private Label lblVolume;
     @FXML private Label lblVelocity;
     
-    private Configuration config;
+    private GameConfiguration config;
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        config = Configuration.getInstance();
+        config = GameConfiguration.getInstance();
         loadCurrentConfiguration();
         controlsConfiguration();
         configureEvents();

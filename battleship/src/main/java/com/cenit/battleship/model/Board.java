@@ -1,5 +1,6 @@
 package com.cenit.battleship.model;
 
+import com.cenit.battleship.model.enums.CellState;
 import com.cenit.battleship.model.enums.ShotResult;
 import java.util.ArrayList;
 import java.util.List;
@@ -8,7 +9,7 @@ import java.util.List;
  * Representa el tablero de juego de batalla naval
  */
 public class Board {
-    public static final int SIZE = 10;
+    public static final int SIZE = 15;
     private Cell[][] grid;
     private List<Ship> ships;
     
@@ -27,6 +28,156 @@ public class Board {
                 grid[i][j] = new Cell();
             }
         }
+    }
+    
+    
+    
+    /**
+     * Obtiene el barco en una coordenada específica
+     * @param coord Coordenada a verificar
+     * @return El barco en esa coordenada, o null si no hay barco
+     */
+    public Ship getShipAt(Coordinate coord) {
+        if (coord == null) {
+            throw new IllegalArgumentException("La coordenada no puede ser nula");
+        }
+        
+        int x = coord.getX();
+        int y = coord.getY();
+        
+        // Validar coordenadas
+        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
+            System.err.println("❌ Coordenada fuera de los límites: " + coord);
+            return null;
+        }
+        
+        // Buscar en la celda
+        Cell cell = grid[x][y];
+        if (cell != null && cell.hasShip()) {
+            return cell.getShip();
+        }
+        
+        // Buscar en la lista de barcos (backup)
+        for (Ship ship : ships) {
+            if (ship.occupiesCoordinate(coord)) {
+                return ship;
+            }
+        }
+        
+        return null;
+    }
+    
+    /**
+     * Obtiene la celda en una coordenada específica
+     * @param coord Coordenada de la celda
+     * @return La celda en esa coordenada
+     */
+    public Cell getCellAt(Coordinate coord) {
+        if (coord == null) {
+            throw new IllegalArgumentException("La coordenada no puede ser nula");
+        }
+        
+        int x = coord.getX();
+        int y = coord.getY();
+        
+        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
+            throw new IllegalArgumentException("Coordenada fuera de los límites: " + coord);
+        }
+        
+        return grid[x][y];
+    }
+    // ========== MÉTODOS DE DISPARO ==========
+    
+      
+    
+    /**
+     * Realiza un disparo en una coordenada
+     * @param coord Coordenada del disparo
+     * @return Resultado del disparo
+     */
+    public ShotResult shootAt(Coordinate coord) {
+        if (coord == null) {
+            return ShotResult.INVALID;
+        }
+        
+        int x = coord.getX();
+        int y = coord.getY();
+        
+        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
+            return ShotResult.INVALID;
+        }
+        
+        Cell cell = grid[x][y];
+        return cell != null ? cell.shoot() : ShotResult.INVALID;
+    }
+    
+    /**
+     * Verifica si hay un barco en la coordenada
+     * @param coord Coordenada a verificar
+     * @return true si hay un barco en esa coordenada
+     */
+    public boolean hasShipAt(Coordinate coord) {
+        return getShipAt(coord) != null;
+    }
+    
+    /**
+     * Obtiene el estado de la celda en la coordenada
+     * @param coord Coordenada a verificar
+     * @return El estado de la celda (con barco, impactada, etc.)
+     */
+    public CellState getCellState(Coordinate coord) {
+        Cell cell = getCellAt(coord);
+        return cell != null ? cell.getState() : CellState.WATER;
+    }
+    
+    /**
+     * Agrega un barco al tablero
+     * @param ship Barco a agregar
+     */
+    public void addShip(Ship ship) {
+        if (ship == null) {
+            throw new IllegalArgumentException("El barco no puede ser nulo");
+        }
+        
+        if (!ships.contains(ship)) {
+            ships.add(ship);
+            System.out.println("✅ Barco " + ship.getType().getName() + " agregado al tablero");
+        }
+    }
+    
+    /**
+     * Obtiene todos los barcos del tablero
+     * @return Lista de barcos
+     */
+    public List<Ship> getShips() {
+        return new ArrayList<>(ships);
+    }
+    
+    /**
+     * Obtiene los barcos que aún no han sido hundidos
+     * @return Lista de barcos activos
+     */
+    public List<Ship> getActiveShips() {
+        List<Ship> activeShips = new ArrayList<>();
+        for (Ship ship : ships) {
+            if (!ship.isSunk()) {
+                activeShips.add(ship);
+            }
+        }
+        return activeShips;
+    }
+    
+    /**
+     * Verifica si todos los barcos han sido hundidos
+     * @return true si todos los barcos están hundidos
+     */
+    public boolean allShipsSunk() {
+        for (Ship ship : ships) {
+            if (!ship.isSunk()) {
+                return false;
+            }
+        }
+        return true;
     }
     
     // ========== MÉTODOS DE ACCESO A CELDAS ==========
@@ -60,18 +211,9 @@ public class Board {
      * @param coord Coordenada a verificar
      * @return true si hay un barco en esa celda
      */
-    public boolean hasShipAt(Coordinate coord) {
-        return getCell(coord).hasShip();
-    }
     
-    /**
-     * Verifica si la celda en la coordenada ha sido revelada
-     * @param coord Coordenada a verificar
-     * @return true si la celda ha sido revelada
-     */
-    public boolean isCellRevealed(Coordinate coord) {
-        return getCell(coord).isRevealed();
-    }
+    
+    
     
     /**
      * Verifica si se puede disparar en la coordenada
@@ -110,27 +252,11 @@ public class Board {
                          coordinates.get(coordinates.size() - 1).aNotacion());
     }
     
-    // ========== MÉTODOS DE DISPARO ==========
     
-    /**
-     * Realiza un disparo en la coordenada especificada
-     * @param coord Coordenada del disparo
-     * @return Resultado del disparo
-     */
-    public ShotResult shootAt(Coordinate coord) {
-        Cell cell = getCell(coord);
-        return cell.shoot();
-    }
     
     // ========== MÉTODOS DE INFORMACIÓN ==========
     
-    /**
-     * Obtiene todos los barcos en el tablero
-     * @return Lista de barcos
-     */
-    public List<Ship> getShips() {
-        return new ArrayList<>(ships);
-    }
+        
     
     /**
      * Obtiene la cantidad de barcos aún a flote
@@ -150,9 +276,7 @@ public class Board {
      * Verifica si todos los barcos han sido hundidos
      * @return true si no quedan barcos a flote
      */
-    public boolean allShipsSunk() {
-       return ships.stream().allMatch(Ship::isSunk);
-    }
+    
   
     /**
      * Obtiene una representación visual del tablero
@@ -202,29 +326,5 @@ public class Board {
         ships.clear();
     }
     
-    /**
-     * Obtiene estadísticas del tablero
-     * @return String con estadísticas
-     */
-    public String getStats() {
-        int totalCells = SIZE * SIZE;
-        int revealedCells = 0;
-        int shipCells = 0;
-        int hitCells = 0;
-        
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
-                Cell cell = grid[i][j];
-                if (cell.isRevealed()) revealedCells++;
-                if (cell.hasShip()) shipCells++;
-                if (cell.hasShip() && cell.isRevealed()) hitCells++;
-            }
-        }
-        
-        return String.format(
-            "Celdas: %d total, %d reveladas (%.1f%%), %d barcos, %d impactos",
-            totalCells, revealedCells, (revealedCells * 100.0 / totalCells),
-            shipCells, hitCells
-        );
-    }
+    
 }

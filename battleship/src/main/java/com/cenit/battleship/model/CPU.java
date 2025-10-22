@@ -225,10 +225,20 @@ public class CPU extends Player {
     }
     
     private boolean isValidHuntingShot(Coordinate coord, Player opponent) {
-        // Verificar que no se haya disparado ya y que sea una posición válida
-        return availableShots.contains(coord) && 
-               !opponent.getBoard().getCell(coord).isRevealed();
+    // Verificar que la coordenada esté en la lista de disparos disponibles
+    if (!availableShots.contains(coord)) {
+        return false;
     }
+    
+    // Verificar que la celda exista
+    Cell targetCell = opponent.getBoard().getCell(coord);
+    if (targetCell == null) {
+        return false;
+    }
+    
+    // Verificar que no se haya disparado ya en esta celda
+    return !targetCell.hasBeenShot();
+}
     
     /**
      * Encuentra un nuevo objetivo usando probabilidad de densidad

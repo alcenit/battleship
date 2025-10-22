@@ -1,0 +1,182 @@
+/*
+ * gameview.css
+ * Estilos específicos para la vista de juego (GameView.fxml) del juego Battleship.
+ * Tema: Naval y oscuro.
+ */
+
+/* =============================================
+   ESTILOS GLOBALES Y DE CONTENEDORES
+   ============================================= */
+
+/* Estilo base para la ventana de juego */
+.root {
+    -fx-background-color: #1a252f; /* Azul marino muy oscuro */
+    -fx-font-family: "Segoe UI", "Arial", sans-serif;
+    -fx-font-size: 14px;
+    -fx-text-fill: #E0E0E0; /* Color de texto por defecto */
+}
+
+/* Estilo para los paneles de información laterales */
+.info-panel {
+    -fx-background-color: #233142; /* Un poco más claro que el fondo */
+    -fx-border-color: #4A5F7A;
+    -fx-border-width: 1px;
+    -fx-border-radius: 8px;
+    -fx-background-radius: 8px;
+    -fx-padding: 15px;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.3), 5, 0.0, 0, 2);
+}
+
+/* =============================================
+   ESTILOS PARA TEXTO (LABELS)
+   ============================================= */
+
+/* Títulos de los paneles (Tu Flota, Flota Enemiga) */
+.panel-title {
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #F5F5F5; /* Blanco roto */
+    -fx-alignment: center;
+}
+
+/* Etiqueta de estado del turno (TU TURNO) */
+.estado-turno {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #4FC3F7; /* Azul brillante para resaltar */
+    -fx-background-color: #1a4d6d;
+    -fx-background-radius: 15px;
+    -fx-padding: 5px 15px;
+}
+
+/* Mensaje de estado general (¡Buena suerte, Almirante!) */
+.mensaje-estado {
+    -fx-font-size: 14px;
+    -fx-font-style: italic;
+    -fx-text-fill: #B0BEC5; /* Gris azulado */
+}
+
+/* Etiqueta de estado de la flota (Barcos: 5/5) */
+.estado-flota {
+    -fx-font-size: 13px;
+    -fx-text-fill: #CFD8DC; /* Gris claro */
+    -fx-alignment: center;
+}
+
+/* =============================================
+   ESTILOS PARA BOTONES
+   ============================================= */
+
+/* Estilo base para todos los botones */
+.button {
+    -fx-background-color: #3E5A73;
+    -fx-text-fill: white;
+    -fx-border-color: transparent;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+    -fx-font-weight: bold;
+    -fx-cursor: hand;
+    -fx-padding: 8px 16px;
+    -fx-background-insets: 0;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.2), 3, 0.0, 0, 1);
+}
+
+/* Efecto al pasar el ratón sobre un botón */
+.button:hover {
+    -fx-background-color: #4A6A87;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 5, 0.0, 0, 2);
+}
+
+/* Efecto al presionar un botón */
+.button:pressed {
+    -fx-background-color: #2E4358;
+    -fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 2, 0.0, 0, 1);
+}
+
+/* --- Botones Específicos --- */
+
+/* Botón de Habilidades (Especial) */
+.btn-special {
+    -fx-background-color: #7B1FA2; /* Púrpura */
+}
+.btn-special:hover {
+    -fx-background-color: #9C27B0;
+}
+
+/* Botón de Pausa (Secundario) */
+.btn-secondary {
+    -fx-background-color: #607D8B; /* Gris azulado */
+}
+.btn-secondary:hover {
+    -fx-background-color: #78909C;
+}
+
+/* Botón de Reiniciar (Peligro) */
+.btn-danger {
+    -fx-background-color: #C62828; /* Rojo */
+}
+.btn-danger:hover {
+    -fx-background-color: #E53935;
+}
+
+/* =============================================
+   ESTILOS PARA EL TABLERO DE JUEGO
+   ============================================= */
+
+/* Estilo para las casillas del tablero (estado por defecto: agua) */
+.casilla-agua {
+    -fx-background-color: #0D47A1; /* Azul profundo */
+    -fx-border-color: #1976D2;
+    -fx-border-width: 1px;
+    -fx-cursor: hand;
+}
+
+/* Efecto al pasar el ratón sobre una casilla clickeable (tablero enemigo) */
+.casilla-agua:hover {
+    -fx-background-color: #1565C0;
+    -fx-border-color: #42A5F5;
+    -fx-effect: dropshadow(gaussian, #42A5F5, 5, 0.5, 0, 0);
+}
+
+/* --- ESTADOS ADICIONALES PARA LAS CASILLAS (úsalos en tu lógica Java) --- */
+
+/* Para cuando un barco es tocado */
+.casilla-tocado {
+    -fx-background-color: #B71C1C; /* Rojo oscuro */
+    -fx-border-color: #D32F2F;
+}
+
+/* Para cuando un disparo falla al agua */
+.casilla-fallo {
+    -fx-background-color: #455A64; /* Gris oscuro */
+    -fx-border-color: #607D8B;
+}
+
+/* Para mostrar un barco del jugador (en su propio tablero) */
+.casilla-barco {
+    -fx-background-color: #37474F; /* Gris muy oscuro, casi negro */
+    -fx-border-color: #546E7A;
+}
+
+/* =============================================
+   ESTILOS PARA LA BARRA DE MENÚ Y PROGRESO
+   ============================================= */
+
+/* Barra de menú */
+.menu-bar {
+    -fx-background-color: #233142;
+}
+.menu-bar .label {
+    -fx-text-fill: #E0E0E0;
+}
+.menu-bar .menu-button:hover {
+    -fx-background-color: #3E5A73;
+}
+
+/* Barra de progreso */
+.progress-bar {
+    -fx-accent: #4FC3F7; /* Color de la barra de progreso */
+}
+.progress-bar .track {
+    -fx-background-color: #3E5A73; /* Color de fondo de la barra */
+}

@@ -2,7 +2,6 @@ package com.cenit.battleship.services;
 
 import com.cenit.battleship.controller.GameController;
 import com.cenit.battleship.model.Board;
-import com.cenit.battleship.model.BoardState;
 import com.cenit.battleship.model.Cell;
 import com.cenit.battleship.model.Coordinate;
 import com.cenit.battleship.model.Ship;
@@ -10,7 +9,6 @@ import com.cenit.battleship.model.Skill;
 import com.cenit.battleship.model.SkillSystem;
 import com.cenit.battleship.model.enums.CellState;
 import com.cenit.battleship.model.enums.GamePhase;
-import com.cenit.battleship.model.enums.ShipType;
 import com.cenit.battleship.services.dto.BoardDTO;
 import com.cenit.battleship.services.dto.GameStateDTO;
 import com.cenit.battleship.services.dto.ShipDTO;
@@ -139,24 +137,74 @@ public class GameStateMapper {
                 .collect(Collectors.toList());
     }
     
-    private void restoreBoard(Board board, BoardDTO dto) {
-        if (board == null || dto == null) {
-            throw new IllegalArgumentException("Board o DTO no pueden ser nulos");
-        }
-        
-        int size = dto.getSize();
-        if (size != Board.SIZE) {
-            throw new IllegalStateException("Tamaño del tablero no coincide: " + size + " vs " + Board.SIZE);
-        }
-        
-        for (int i = 0; i < size; i++) {
-            for (int j = 0; j < size; j++) {
-                String estadoStr = dto.getCellStates()[i][j];
-                CellState estado = parseCellState(estadoStr);
-                board.getCell(i, j).setState(estado);
-            }
+   private void restoreBoard(Board board, BoardDTO dto) {
+    if (board == null || dto == null) {
+        throw new IllegalArgumentException("Board o DTO no pueden ser nulos");
+    }
+    
+    int size = dto.getSize();
+    if (size != Board.SIZE) {
+        throw new IllegalStateException("Tamaño del tablero no coincide: " + size + " vs " + Board.SIZE);
+    }
+    
+    // Primero limpiar el tablero
+    board.reset();
+    
+    // Restaurar el estado de cada celda
+    for (int i = 0; i < size; i++) {
+        for (int j = 0; j < size; j++) {
+            String estadoStr = dto.getCellStates()[i][j];
+            CellState estado = parseCellState(estadoStr);
+            Coordinate coord = new Coordinate(i, j);
+            Cell cell = board.getCell(coord);
+            
+            restoreCellState(cell, estado);
         }
     }
+    
+   
+}
+   
+private void restoreCellState(Cell cell, CellState estado) {
+    if (cell == null) return;
+    
+    // Resetear la celda primero
+    cell.reset();
+    
+    switch (estado) {
+        case WATER:
+            // Estado por defecto, no hacer nada
+            break;
+            
+        case SHIP:
+            // Para SHIP necesitamos tener información del barco
+            // Esto se manejará en restoreShips()
+            break;
+            
+        case IMPACT:
+            // Simular un disparo acertado
+            if (cell.hasShip()) {
+                cell.shoot(); // Esto marcará hasBeenShot = true e isHit = true
+            }
+            break;
+            
+        case MISS:
+            // Simular un disparo fallido
+            if (!cell.hasShip()) {
+                // Forzar el estado de disparo fallido
+                cell.shoot(); // Esto marcará hasBeenShot = true
+            }
+            break;
+            
+        case SUNK_SHIP:
+            // Para SUNK_SHIP, el barco debe estar marcado como hundido
+            if (cell.hasShip()) {
+                cell.shoot(); // Marcar como impactado
+                // El estado hundido se maneja automáticamente si el barco está hundido
+            }
+            break;
+    }
+}
     
     private CellState parseCellState(String estadoStr) {
         if (estadoStr == null) return CellState.WATER;

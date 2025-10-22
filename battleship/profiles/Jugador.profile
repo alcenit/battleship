@@ -3,7 +3,7 @@
   "playerName": "Jugador",
   "avatar": "🚢",
   "creationDate": "Oct 19, 2025, 8:04:29 PM",
-  "lastPlayed": "Oct 19, 2025, 9:08:32 PM",
+  "lastPlayed": "Oct 22, 2025, 10:07:58 AM",
   "statistics": {
     "gamesPlayed": 0,
     "gamesWon": 0,

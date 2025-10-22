@@ -272,7 +272,7 @@ public class AnimationController {
         move.setOnFinished(e -> {
             animationLayer.getChildren().remove(missile);
             // Explosión al llegar al objetivo
-            if (result.isImpact()) {
+            if (result.isHit()) {
                 playExplosionAnimation(target, result);
             } else {
                 playWaterSplashAnimation(target, result);

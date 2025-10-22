@@ -1,6 +1,6 @@
 package com.cenit.battleship.controller;
 
-import com.cenit.battleship.model.Configuration;
+import com.cenit.battleship.model.GameConfiguration;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.Map;
@@ -16,14 +16,14 @@ public class SoundController {
     private static SoundController instance;
     private Map<String, AudioClip> soundEffects;
     private MediaPlayer backgroundMusic;
-    private Configuration config;
+    private GameConfiguration config;
     private boolean soundsLoaded;
     private boolean musicEnabled;
     private boolean effectsEnabled;
 
     // Constructor privado para singleton
     private SoundController() {
-        this.config = Configuration.getInstance();
+        this.config = GameConfiguration.getInstance();
         this.soundEffects = new HashMap<>();
         this.soundsLoaded = false;
         this.musicEnabled = config.isSoundEnabled();

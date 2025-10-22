@@ -168,7 +168,7 @@ public class StorageService {
         state.setCPUSunkenShips(new ArrayList<>(gameController.getSunkShipsCPU()));
 
         // Configuración
-        state.setConfiguration(Configuration.getInstance());
+        state.setConfiguration(GameConfiguration.getInstance());
 
         return state;
     }

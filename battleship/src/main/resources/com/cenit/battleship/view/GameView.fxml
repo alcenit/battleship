@@ -20,14 +20,15 @@
       xmlns:fx="http://javafx.com/fxml/1" 
       fx:controller="com.cenit.battleship.view.GameViewController">
    <padding><Insets bottom="15" left="15" right="15" top="15" /></padding>
-    <!-- Barra de Menú -->
+   
+   <!-- Barra de Menú -->
    <MenuBar>
       <Menu text="Archivo">
-         <MenuItem fx:id="menuGuardar" text="Guardar Partida"/>
-         <MenuItem fx:id="menuGuardarComo" text="Guardar Como..."/>
-         <MenuItem fx:id="menuCargar" text="Cargar Partida"/>
+         <MenuItem fx:id="saveMenu" text="Guardar Partida"/>
+         <MenuItem fx:id="saveAsMenu" text="Guardar Como..."/>
+         <MenuItem fx:id="loadMenu" text="Cargar Partida"/>
          <SeparatorMenuItem/>
-         <MenuItem fx:id="menuSalir" text="Salir al Menú Principal"/>
+         <MenuItem fx:id="exitMenu" text="Salir al Menú Principal"/>
       </Menu>
       <Menu text="Opciones">
          <MenuItem text="Configuración"/>
@@ -39,51 +40,46 @@
       </Menu>
    </MenuBar>
    
-   <!-- Resto del contenido existente -->
-   <HBox spacing="20" alignment="CENTER">
-     <!-- Barra superior: Estado y controles -->
+   <!-- Barra superior: Estado y controles -->
    <HBox alignment="CENTER" spacing="20">
-      <Label fx:id="lblTurno" styleClass="estado-turno" text="TU TURNO" />
-      <Label fx:id="lblMensaje" styleClass="mensaje-estado" text="¡Buena suerte, Almirante!" />
+      <Label fx:id="lblTurn" styleClass="estado-turno" text="TU TURNO" />
+      <Label fx:id="lblMessage" styleClass="mensaje-estado" text="¡Buena suerte, Almirante!" />
       <Region HBox.hgrow="ALWAYS" />
-      <Button fx:id="btnHabilidad" styleClass="btn-special" text="Habilidades" />
-      <Button fx:id="btnPausa" styleClass="btn-secondary" text="Pausa" />
-      <Button fx:id="btnReiniciar" styleClass="btn-danger" text="Reiniciar" />
+      <Button fx:id="btnSkill" styleClass="btn-special" text="Habilidades" />
+      <Button fx:id="btnPause" styleClass="btn-secondary" text="Pausa" />
+      <Button fx:id="btnReset" styleClass="btn-danger" text="Reiniciar" />
    </HBox>
    
-   
-   <!-- Contenido principal -->
+   <!-- Contenido principal (Tableros y paneles) -->
    <HBox alignment="TOP_CENTER" spacing="30">
       
       <!-- Panel izquierdo: Tablero del jugador -->
       <VBox alignment="CENTER" spacing="10">
          <Label styleClass="panel-title" text="Tu Flota" />
-         <GridPane fx:id="tableroJugador" hgap="1" vgap="1" />
-         <Label fx:id="lblEstadoJugador" styleClass="estado-flota" text="Barcos: 5/5" />
+         <GridPane fx:id="playerBoard" hgap="1" vgap="1" />
+         <Label fx:id="lblPlayerState" styleClass="estado-flota" text="Barcos: 5/5" />
       </VBox>
       
       <!-- Panel central: Información -->
       <VBox prefWidth="250" spacing="20">
-         <VBox fx:id="panelInfoJugador" spacing="5" styleClass="info-panel" />
-         <VBox fx:id="panelInfoCPU" spacing="5" styleClass="info-panel" />
-         <VBox fx:id="panelHabilidades" spacing="5" styleClass="info-panel" />
+         <VBox fx:id="playerInfoPanel" spacing="5" styleClass="info-panel" />
+         <VBox fx:id="cpuInfoPanel" spacing="5" styleClass="info-panel" />
+         <VBox fx:id="skillsPanel" spacing="5" styleClass="info-panel" />
       </VBox>
       
       <!-- Panel derecho: Tablero enemigo -->
       <VBox alignment="CENTER" spacing="10">
          <Label styleClass="panel-title" text="Flota Enemiga" />
-         <GridPane fx:id="tableroCPU" hgap="1" vgap="1" />
-         <Label fx:id="lblEstadoCPU" styleClass="estado-flota" text="Barcos enemigos: 5/5" />
+         <GridPane fx:id="cpuBoard" hgap="1" vgap="1" />
+         <Label fx:id="lblCpuState" styleClass="estado-flota" text="Barcos enemigos: 5/5" />
       </VBox>
    </HBox>
    
    <!-- Barra de progreso -->
-   <ProgressBar fx:id="progresoPartida" prefWidth="1000" progress="0.0" />
-   </HBox>
-   
+   <ProgressBar fx:id="gameProgress" prefWidth="1000" progress="0.0" />
    
    <stylesheets>
-        <URL value="@/com/cenit/battleship/styles/mainview.css" />
-    </stylesheets>
+        <!-- Ruta relativa al FXML -->
+        <URL value="@../styles/gameview.css" />
+   </stylesheets>
 </VBox>
-

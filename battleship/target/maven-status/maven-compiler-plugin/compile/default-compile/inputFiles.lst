@@ -21,6 +21,7 @@ C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\ba
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\BoardState.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\controller\AnimationController.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\App.java
+C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\GameConfiguration.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\SecondaryController.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\Cell.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\SaveGameInfo.java
@@ -49,6 +50,7 @@ C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\ba
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\util\Constant.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\services\StorageService.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\SkillSystem.java
+C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\view\components\ShipRenderer.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\enums\ShipType.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\GameStatistics.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\view\components\Cellview.java
@@ -56,4 +58,3 @@ C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\ba
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\services\CPUService.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\Coordinate.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\controller\SkillController.java
-C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\Configuration.java

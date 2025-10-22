@@ -1,14 +1,12 @@
 package com.cenit.battleship.model;
 
-/**
- * Representa una coordenada en el tablero de batalla naval
- *
- * @author Usuario
- */
 public record Coordinate(int x, int y) {
 
+    //instancia de la configuración tiene que se static
+    private static final GameConfiguration config = GameConfiguration.getInstance();
+
     public Coordinate  {
-        if (x < 0 || x >= 10 || y < 0 || y >= 10) {
+        if (x < 0 || x >= config.getBoardSize() || y < 0 || y >= config.getBoardSize()) {
             throw new IllegalArgumentException("Coordenada fuera del tablero: (" + x + ", " + y + ")");
         }
     }

@@ -13,9 +13,9 @@ import java.util.Properties;
  * Clase singleton para gestionar la configuración del juego
  * @author Usuario
  */
-public class Configuration {
+public class GameConfiguration {
 
-    private static Configuration instancia;
+    private static GameConfiguration instancia;
     
     // Propiedades de configuración
     private Difficulty cpuDifficulty;   
@@ -28,6 +28,9 @@ public class Configuration {
     private boolean showHelp;
     private String visualTheme;
     private String language;
+    private int boardSize;
+    private int cellSize;
+    
     
     // Archivo de configuración
     private static final String CONFIG_FILE = "config.properties";
@@ -44,14 +47,17 @@ public class Configuration {
     private static final boolean DEFAULT_HELP = true;
     private static final String DEFAULT_THEME = "default";
     private static final String DEFAULT_LANGUAGE = "es";
+    // --- VALORES POR DEFECTO PARA EL TABLERO ---
+    public static final int DEFAULT_BOARD_SIZE = 15;
+    public static final int DEFAULT_CELL_SIZE = 40;
     
-    private Configuration() {
+    private GameConfiguration() {
         loadConfiguration();
     }
     
-    public static Configuration getInstance() {
+    public static GameConfiguration getInstance() {
         if (instancia == null) {
-            instancia = new Configuration();
+            instancia = new GameConfiguration();
         }
         return instancia;
     }
@@ -109,7 +115,12 @@ public class Configuration {
             this.visualTheme = properties.getProperty("visualTheme", "default");
             this.language = properties.getProperty("language", "es");
             
-        } catch (Exception e) {
+            // ---  TABLERO ---
+            this.boardSize = Integer.parseInt(properties.getProperty("boardSize", String.valueOf(DEFAULT_BOARD_SIZE)));
+            this.cellSize = Integer.parseInt(properties.getProperty("cellSize", String.valueOf(DEFAULT_CELL_SIZE)));
+            
+            
+        } catch (NumberFormatException e) {
             System.err.println("❌ Error al parsear configuración: " + e.getMessage());
             useDefaultValues();
         }
@@ -135,6 +146,10 @@ public class Configuration {
         // Interfaz
         properties.setProperty("visualTheme", visualTheme);
         properties.setProperty("language", language);
+        
+        // ---  GUARDADOS DEL TABLERO ---
+        properties.setProperty("boardSize", String.valueOf(this.boardSize));
+        properties.setProperty("cellSize", String.valueOf(this.cellSize));
     }
     
     private void useDefaultValues() {
@@ -148,9 +163,48 @@ public class Configuration {
         this.showHelp = DEFAULT_HELP;
         this.visualTheme = DEFAULT_THEME;
         this.language = DEFAULT_LANGUAGE;
+        
+        this.boardSize = DEFAULT_BOARD_SIZE;
+        this.cellSize = DEFAULT_CELL_SIZE;
     }
     
     // ========== GETTERS Y SETTERS ==========
+    
+    public int getBoardSize() {
+        return boardSize;
+    }
+
+    /**
+     * Establece un nuevo tamaño para el tablero.
+     * Debe usarse con precaución, ya que afecta a toda la lógica del juego.
+     * @param size El nuevo tamaño (ej. 10 para un tablero 10x10).
+     */
+    public void setBoardSize(int size) {
+        if (size > 0 && size <= 20) { // Poner un límite razonable
+            this.boardSize = size;
+            System.out.println("📐 Tamaño del tablero establecido a: " + size + "x" + size);
+        } else {
+            System.err.println("⚠️ Tamaño de tablero inválido: " + size + ". Debe estar entre 1 y 20.");
+        }
+    }
+
+    public int getCellSize() {
+        return cellSize;
+    }
+
+    /**
+     * Establece un nuevo tamaño para las casillas del tablero.
+     * @param size El nuevo tamaño en píxeles.
+     */
+    public void setCellSize(int size) {
+        if (size > 10 && size <= 100) { // Poner un límite razonable
+            this.cellSize = size;
+            System.out.println("📏 Tamaño de casilla establecido a: " + size + "px");
+        } else {
+            System.err.println("⚠️ Tamaño de casilla inválido: " + size + ". Debe estar entre 10 y 100.");
+        }
+    }
+
     
     public Difficulty getCpuDifficulty() {
         return cpuDifficulty;

@@ -74,7 +74,7 @@ public class CPUController {
     }
 
     public void processResult(Coordinate shot, ShotResult result) {
-        if (result.isImpact()) {
+        if (result.isHit()) {
             // Cambiar a modo destrucción si no estábamos en él
             if (inSearchMode) {
                 inSearchMode = false;
@@ -393,7 +393,7 @@ public class CPUController {
         // Reducir probabilidad en casillas ya disparadas
         mapOdds[shot.x()][shot.y()] = 0;
 
-        if (result.isImpact() && !result.isSunk()) {
+        if (result.isHit() && !result.isSunk()) {
             // Aumentar probabilidad en casillas adyacentes
             increaseProbabilityAround(shot, 5);
         }

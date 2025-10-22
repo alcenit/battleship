@@ -9,7 +9,7 @@ package com.cenit.battleship.services;
 import com.cenit.battleship.model.PlayerProfile;
 import com.cenit.battleship.model.GameStatistics;
 import com.cenit.battleship.model.enums.Achievement;
-import com.cenit.battleship.model.Configuration;
+import com.cenit.battleship.model.GameConfiguration;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import java.io.*;
@@ -173,7 +173,7 @@ public class ProfileService {
     public PlayerProfile getCurrentProfile() {
         if (currentProfile == null) {
             // Intentar cargar el perfil por defecto de la configuración
-            String defaultPlayerName = Configuration.getInstance().getPlayerName();
+            String defaultPlayerName = GameConfiguration.getInstance().getPlayerName();
             if (defaultPlayerName != null && profileExists(defaultPlayerName)) {
                 currentProfile = getProfile(defaultPlayerName);
             }
@@ -188,7 +188,7 @@ public class ProfileService {
         if (playerName != null && profileExists(playerName)) {
             currentProfile = getProfile(playerName);
             // Actualizar configuración global
-            Configuration.getInstance().setPlayerName(playerName);
+            GameConfiguration.getInstance().setPlayerName(playerName);
             System.out.println("👤 Perfil actual establecido: " + playerName);
         } else {
             System.err.println("❌ No se pudo establecer el perfil: " + playerName);
@@ -202,7 +202,7 @@ public class ProfileService {
         if (profile != null) {
             currentProfile = profile;
             loadedProfiles.put(profile.getPlayerName(), profile);
-            Configuration.getInstance().setPlayerName(profile.getPlayerName());
+            GameConfiguration.getInstance().setPlayerName(profile.getPlayerName());
             System.out.println("👤 Perfil actual establecido: " + profile.getPlayerName());
         }
     }

@@ -8,6 +8,7 @@ public enum ShotResult {
     MISS(false, false, "💧 Agua", "Disparo al agua"),
     SUNK(true, true, "💀 ¡Barco hundido!", "Has hundido un barco enemigo"),
     ALREADY_SHOT(false, false, "⚠️ Ya disparado", "Ya habías disparado en esta posición"),
+    ALREADY_HIT(false, false, "Ya se impactó", " Ya habías disparado en esta parte del barco"),
     INVALID(false, false, "❌ Inválido", "Coordenada de disparo inválida");
 
     private final boolean impact;
@@ -23,7 +24,7 @@ public enum ShotResult {
     }
 
     // Getters
-    public boolean isImpact() {
+    public boolean isHit() {
         return impact;
     }
 
@@ -66,12 +67,18 @@ public enum ShotResult {
      */
     public String getColor() {
         switch (this) {
-            case HIT: return "#FF6B6B"; // Rojo
-            case MISS: return "#4FC3F7"; // Azul
-            case SUNK: return "#D32F2F"; // Rojo oscuro
-            case ALREADY_SHOT: return "#9E9E9E"; // Gris
-            case INVALID: return "#F44336"; // Rojo error
-            default: return "#FFFFFF"; // Blanco
+            case HIT:
+                return "#FF6B6B"; // Rojo
+            case MISS:
+                return "#4FC3F7"; // Azul
+            case SUNK:
+                return "#D32F2F"; // Rojo oscuro
+            case ALREADY_SHOT:
+                return "#9E9E9E"; // Gris
+            case INVALID:
+                return "#F44336"; // Rojo error
+            default:
+                return "#FFFFFF"; // Blanco
         }
     }
 
@@ -80,12 +87,18 @@ public enum ShotResult {
      */
     public String getSoundEffect() {
         switch (this) {
-            case HIT: return "explosion.wav";
-            case MISS: return "splash.wav";
-            case SUNK: return "sinking.wav";
-            case ALREADY_SHOT: return "error.wav";
-            case INVALID: return "error.wav";
-            default: return "click.wav";
+            case HIT:
+                return "explosion.wav";
+            case MISS:
+                return "splash.wav";
+            case SUNK:
+                return "sinking.wav";
+            case ALREADY_SHOT:
+                return "error.wav";
+            case INVALID:
+                return "error.wav";
+            default:
+                return "click.wav";
         }
     }
 
@@ -94,12 +107,18 @@ public enum ShotResult {
      */
     public int getPoints() {
         switch (this) {
-            case HIT: return 10;
-            case MISS: return 0;
-            case SUNK: return 50;
-            case ALREADY_SHOT: return -5;
-            case INVALID: return -10;
-            default: return 0;
+            case HIT:
+                return 10;
+            case MISS:
+                return 0;
+            case SUNK:
+                return 50;
+            case ALREADY_SHOT:
+                return -5;
+            case INVALID:
+                return -10;
+            default:
+                return 0;
         }
     }
 

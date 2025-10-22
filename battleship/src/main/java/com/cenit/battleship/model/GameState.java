@@ -35,7 +35,7 @@ public class GameState {
     private List<Ship> playerSunkenShips;
     private List<Ship> CPUSunkenShips;
 
-    private Configuration configuration;
+    private GameConfiguration configuration;
 
     // Getters y Setters
     public Date getSavedDate() {
@@ -141,11 +141,11 @@ public class GameState {
         this.CPUSunkenShips = CPUSunkenShips;
     }
 
-    public Configuration getConfiguration() {
+    public GameConfiguration getConfiguration() {
         return configuration;
     }
 
-    public void setConfiguration(Configuration configuration) {
+    public void setConfiguration(GameConfiguration configuration) {
         this.configuration = configuration;
     }
 }

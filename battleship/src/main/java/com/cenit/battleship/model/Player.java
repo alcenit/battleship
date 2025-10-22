@@ -148,8 +148,13 @@ public ShotResult shootAt(Player opponent, Coordinate target) {
     Board opponentBoard = opponent.getBoard();
     Cell targetCell = opponentBoard.getCell(target);
     
-    // Verificar si ya se disparó aquí
-    if (targetCell.isRevealed()) {
+    // Verificar si la celda existe
+    if (targetCell == null) {
+        return ShotResult.INVALID;
+    }
+    
+    // Verificar si ya se disparó aquí (usando el nuevo método)
+    if (targetCell.hasBeenShot()) {
         return ShotResult.ALREADY_SHOT;
     }
     
@@ -159,29 +164,37 @@ public ShotResult shootAt(Player opponent, Coordinate target) {
         return ShotResult.INVALID;
     }
     
-    // Marcar como revelada
-    targetCell.setRevealed(true);
+    // Realizar el disparo usando el nuevo método shoot() de Cell
+    ShotResult result = targetCell.shoot();
     
-    // Verificar si hay un barco
-    if (targetCell.hasShip()) {
-        Ship hitShip = targetCell.getShip();
-        boolean wasAlreadySunk = hitShip.isSunk();
-        hitShip.recordImpact();
-        
-        boolean sunk = hitShip.isSunk() && !wasAlreadySunk;
-        
-        System.out.println("💥 " + name + " impactó " + hitShip.getType().getName() + 
-                         " en " + target.aNotacion());
-        
-        if (sunk) {
-            System.out.println("💀 " + name + " hundió " + hitShip.getType().getName() + "!");
-        }
-        
-        return ShotResult.fromImpact(true, sunk);
+    // Registrar el resultado
+    switch (result) {
+        case HIT:
+            Ship hitShip = targetCell.getShip();
+            System.out.println("💥 " + name + " impactó " + hitShip.getType().getName() + 
+                             " en " + target.aNotacion());
+            break;
+            
+        case SUNK:
+            Ship sunkShip = targetCell.getShip();
+            System.out.println("💀 " + name + " hundió " + sunkShip.getType().getName() + 
+                             " en " + target.aNotacion() + "!");
+            break;
+            
+        case MISS:
+            System.out.println("💧 " + name + " disparó al agua en " + target.aNotacion());
+            break;
+            
+        case ALREADY_HIT:
+            System.out.println("⚠️ " + name + " impactó nuevamente en " + target.aNotacion());
+            break;
+            
+        default:
+            System.out.println("❌ " + name + " disparo inválido en " + target.aNotacion());
+            break;
     }
     
-    System.out.println("💧 " + name + " disparó al agua en " + target.aNotacion());
-    return ShotResult.MISS;
+    return result;
 }
     
     /**

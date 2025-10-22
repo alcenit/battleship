@@ -7,6 +7,7 @@ import javafx.scene.Scene;
 import javafx.scene.image.Image;
 import javafx.stage.Stage;
 import java.io.IOException;
+import java.net.URL; // CAMBIO: Añadido import para URL
 
 /**
  * JavaFX App - Battleship Game
@@ -24,7 +25,9 @@ public class App extends Application {
     private static final double DEFAULT_HEIGHT = 800;
     private static final String DEFAULT_VIEW = "com/cenit/battleship/view/MainView";
     private static final String CSS_PATH = "/com/cenit/battleship/styles/mainview.css";
-
+    // CONSTATNTE DIMENSIONES DE TABLERO Y CONFIGURACIONES EN CLASE GAMECONFIGURATION
+    
+    
     @Override
     public void start(Stage stage) throws IOException {
         try {
@@ -115,7 +118,10 @@ public class App extends Application {
      * @throws IOException Si no se puede cargar el FXML
      */
     public static void setRoot(String fxml) throws IOException {
-        scene.setRoot(loadFXML(fxml));
+        Parent newRoot = loadFXML(fxml);
+        scene.setRoot(newRoot);
+        // CAMBIO: Añadida traza de depuración CRUCIAL
+        System.out.println("DEBUG: scene.getRoot() cambiado a: " + scene.getRoot().getClass().getSimpleName());
     }
 
     /**
@@ -124,7 +130,7 @@ public class App extends Application {
      * @throws IOException Si no se puede cargar el FXML
      */
     public static void changeView(String fxmlPath) throws IOException {
-        System.out.println("fxmlPath :"+fxmlPath);
+        System.out.println("fxmlPath :" + fxmlPath);
         setRoot(fxmlPath);
     }
 
@@ -155,7 +161,13 @@ public class App extends Application {
      */
     private static Parent loadFXML(String fxml) throws IOException {
         String fullPath = "/" + fxml + ".fxml";
-        FXMLLoader fxmlLoader = new FXMLLoader(App.class.getResource(fullPath));
+        // CAMBIO: Mejorado el manejo de recursos para dar un error más claro
+        URL resourceUrl = App.class.getResource(fullPath);
+        if (resourceUrl == null) {
+            throw new IOException("No se puede encontrar el recurso FXML: " + fullPath);
+        }
+        
+        FXMLLoader fxmlLoader = new FXMLLoader(resourceUrl);
         
         System.out.println("📁 Cargando FXML: " + fullPath);
         Parent root = fxmlLoader.load();

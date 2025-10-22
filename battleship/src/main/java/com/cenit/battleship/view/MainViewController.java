@@ -2,7 +2,7 @@ package com.cenit.battleship.view;
 
 import com.cenit.battleship.App;
 import com.cenit.battleship.controller.GameController;
-import com.cenit.battleship.model.Configuration;
+import com.cenit.battleship.model.GameConfiguration;
 import com.cenit.battleship.model.PlayerProfile;
 import com.cenit.battleship.model.Ship;
 import com.cenit.battleship.model.Skill;
@@ -93,61 +93,55 @@ public class MainViewController implements Initializable {
     }
 
     private void configureEvents() {
-        btnNewGame.setOnAction(e -> startNewGame(e)); // <-- Pásale el 'e' al método
+        btnNewGame.setOnAction(e -> startNewGame(e));
         btnContinue.setOnAction(e -> continueGame());
         btnConfiguration.setOnAction(e -> openConfiguration());
         btnExit.setOnAction(e -> exitGame());
     }
 
-   
+    @FXML
+    private void startNewGame(ActionEvent event) {
+        try {
+            System.out.println("🎮 Iniciando nuevo juego...");
 
+            // 1. Validar selecciones del usuario
+            if (!validateGameSelections()) {
+                return;
+            }
 
-@FXML
-private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'ActionEvent event'
-    try {
-        System.out.println("🎮 Iniciando nuevo juego...");
+            // 2. Obtener configuración del juego
+            String gameMode = comboModeGame.getValue();
+            String playerName = ensureValidPlayerName();
+            Difficulty difficulty = convertDisplayToDifficulty(comboDifficulty.getValue());
 
-        // 1. Validar selecciones del usuario
-        if (!validateGameSelections()) {
-            return;
+            // 3. Guardar configuraciones actuales
+            saveCurrentSettings(gameMode, difficulty);
+
+            // 4. Crear y configurar el controlador del juego
+            GameController gameController = createAndConfigureGame(gameMode, difficulty);
+
+            // 5. Configurar perfil de jugador y estadísticas
+            setupPlayerProfile(gameController, playerName, gameMode, difficulty);
+
+            // 6. Obtener la ventana actual (Stage) desde el evento del botón
+            Stage currentStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
+            
+            // 7. Preparar y mostrar la siguiente vista
+            if (!prepareNextView(currentStage, gameController, gameMode, playerName)) {
+                System.err.println("❌ No se pudo preparar la vista de colocación. Abortando.");
+                return;
+            }
+
+            System.out.println("✅ Nuevo juego iniciado exitosamente");
+
+        } catch (Exception ex) {
+            handleStartGameError(ex);
         }
-
-        // 2. Obtener configuración del juego
-        String gameMode = comboModeGame.getValue();
-        String playerName = ensureValidPlayerName();
-        Difficulty difficulty = convertDisplayToDifficulty(comboDifficulty.getValue());
-
-        // 3. Guardar configuraciones actuales
-        saveCurrentSettings(gameMode, difficulty);
-
-        // 4. Crear y configurar el controlador del juego
-        GameController gameController = createAndConfigureGame(gameMode, difficulty);
-
-        // 5. Configurar perfil de jugador y estadísticas
-        setupPlayerProfile(gameController, playerName, gameMode, difficulty);
-
-        // 6. Obtener la ventana actual (Stage) desde el evento del botón
-        // Esta es la forma correcta de obtener la ventana en un manejador de eventos
-        Stage currentStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-        
-        // 7. Preparar y mostrar la siguiente vista
-        // Este método ahora se encarga de cargar el FXML Y cambiar la escena
-        if (!prepareNextView(currentStage, gameController, gameMode, playerName)) {
-            System.err.println("❌ No se pudo preparar la vista de colocación. Abortando.");
-            return;
-        }
-
-        // ¡Éxito! La aplicación ya ha cambiado a la pantalla de colocar barcos.
-        // No se necesita hacer nada más aquí.
-
-    } catch (Exception ex) {
-        handleStartGameError(ex);
     }
-}
 
     private void loadSavedSettings() {
         try {
-            Configuration config = Configuration.getInstance();
+            GameConfiguration config = GameConfiguration.getInstance();
 
             // Cargar modo de juego guardado
             String savedMode = config.getGameMode();
@@ -219,14 +213,14 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
     }
 
     private String ensureValidPlayerName() {
-        String playerName = Configuration.getInstance().getPlayerName();
+        String playerName = GameConfiguration.getInstance().getPlayerName();
 
         if (playerName == null || playerName.trim().isEmpty() || !isValidPlayerName(playerName)) {
             playerName = promptForPlayerNameWithValidation();
 
             if (playerName == null || playerName.trim().isEmpty()) {
                 playerName = "Comandante";
-                Configuration.getInstance().setPlayerName(playerName);
+                GameConfiguration.getInstance().setPlayerName(playerName);
             }
         }
 
@@ -236,7 +230,7 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
 
     private void saveCurrentSettings(String gameMode, Difficulty difficulty) {
         try {
-            Configuration config = Configuration.getInstance();
+            GameConfiguration config = GameConfiguration.getInstance();
             config.setGameMode(gameMode);
             config.setCpuDifficulty(difficulty);
             config.saveConfiguration();
@@ -251,7 +245,6 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
 
         // Crea un perfil por defecto para el jugador
         PlayerProfile defaultProfile = new PlayerProfile("Jugador");
-        // Usa el constructor COMPLETO para que todo se inicialice correctamente
         GameController controller = new GameController(defaultProfile, difficulty);
 
         controller.setDifficulty(difficulty);
@@ -307,7 +300,7 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
 
             // Cargar el FXML y obtener el controlador
             FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/cenit/battleship/view/PlacementView.fxml"));
-            Parent root = loader.load(); // <-- Este 'root' es el que vamos a usar
+            Parent root = loader.load();
 
             PlacementViewController placementController = loader.getController();
             if (placementController == null) {
@@ -321,7 +314,6 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
             placementController.setPlayerName(playerName);
             placementController.setDifficulty(comboDifficulty.getValue());
 
-            // --- ¡LA PARTE QUE FALTABA! ---
             // Crear una nueva escena con el contenido cargado
             Scene placementScene = new Scene(root);
 
@@ -335,39 +327,10 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
             System.out.println("✅ Vista de colocación preparada y mostrada exitosamente");
             return true;
 
-        } catch (IOException e) { // Es más específico cazar IOException
+        } catch (IOException e) {
             System.err.println("❌ Error al preparar vista: " + e.getMessage());
             showAlert("Error", "No se pudo preparar la vista del juego: " + e.getMessage());
             return false;
-        }
-    }
-
-    private PlacementViewController loadPlacementViewController() {
-        try {
-            // Cargar el FXML y obtener el controlador
-
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/cenit/battleship/view/PlacementView.fxml"));
-            Parent root = loader.load();
-            return loader.getController();
-        } catch (Exception e) {
-            System.err.println("❌ Error cargando PlacementViewController: " + e.getMessage());
-            return null;
-        }
-    }
-
-    private void navigateToPlacementView() {
-        try {
-            App.changeView("view/PlacementView");
-            System.out.println("🎯 Navegación exitosa a PlacementView");
-
-            // Actualizar título de la ventana
-            String gameMode = comboModeGame.getValue();
-            App.getPrimaryStage().setTitle("Battleship - " + gameMode + " - Colocando Barcos");
-
-        } catch (Exception e) {
-            System.err.println("❌ Falló la navegación a PlacementView: " + e.getMessage());
-            showAlert("Error de Navegación",
-                    "No se pudo cargar la vista de colocación: " + e.getMessage());
         }
     }
 
@@ -401,69 +364,23 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
         }
     }
 
-    private void setupTacticalFleet(GameController controller) {
-        // Flota táctica con barcos balanceados
-        List<Ship> tacticalFleet = Arrays.asList(
-                new Ship(ShipType.CARRIER),
-                new Ship(ShipType.BATTLESHIP),
-                new Ship(ShipType.CRUISER),
-                new Ship(ShipType.SUBMARINE),
-                new Ship(ShipType.DESTROYER)
-        );
-
-        controller.setBothFleets(tacticalFleet);
-
-        // Configurar habilidades tácticas
-        SkillSystem skills = controller.getPlayerSkills();
-        skills.addSkill(Skill.SONAR, 3);
-        skills.addSkill(Skill.RADAR, 2);
-        skills.addSkill(Skill.DRONE, 2);
-        skills.setSkillPoints(6);
-    }
-
-    private void setupAsymmetricFleet(GameController controller) {
-        // Jugador: muchos barcos pequeños
-        List<Ship> playerFleet = Arrays.asList(
-                new Ship(ShipType.FRIGATE),
-                new Ship(ShipType.FRIGATE),
-                new Ship(ShipType.FRIGATE),
-                new Ship(ShipType.DESTROYER),
-                new Ship(ShipType.DESTROYER),
-                new Ship(ShipType.SUBMARINE)
-        );
-
-        // CPU: pocos barcos grandes
-        List<Ship> cpuFleet = Arrays.asList(
-                new Ship(ShipType.CARRIER),
-                new Ship(ShipType.BATTLESHIP),
-                new Ship(ShipType.CRUISER)
-        );
-
-        controller.setAsymmetricFleets(playerFleet, cpuFleet);
-    }
-
     private void applyGameModeConfigurations(GameController controller, String gameMode) {
         System.out.println("🎮 Configurando modo: " + gameMode);
 
         switch (gameMode) {
-            case "Flota Especial" ->
-                configureSpecialFleetMode(controller);
-            case "Táctico" ->
-                configureTacticalMode(controller);
-            case "Asimétrico" ->
-                configureAsymmetricMode(controller);
-            case "Relámpago" ->
-                configureLightningMode(controller);
-            case "Enjambre" ->
-                configureSwarmMode(controller);
-            default ->
-                configureClassicMode(controller);
+            case "Flota Especial" -> configureSpecialFleetMode(controller);
+            case "Táctico" -> configureTacticalMode(controller);
+            case "Asimétrico" -> configureAsymmetricMode(controller);
+            case "Relámpago" -> configureLightningMode(controller);
+            case "Enjambre" -> configureSwarmMode(controller);
+            default -> configureClassicMode(controller);
         }
     }
 
     private void configureClassicMode(GameController controller) {
         // Configuración clásica estándar
         SkillSystem skills = controller.getPlayerSkills();
+        skills.reset();
         skills.addSkill(Skill.SONAR, 2);
         skills.addSkill(Skill.RADAR, 1);
         skills.setSkillPoints(4);
@@ -471,6 +388,7 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
 
     private void configureSpecialFleetMode(GameController controller) {
         SkillSystem skills = controller.getPlayerSkills();
+        skills.reset();
         skills.addSkill(Skill.SONAR, 3);
         skills.addSkill(Skill.RADAR, 2);
         skills.addSkill(Skill.DRONE, 2);
@@ -479,6 +397,7 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
 
     private void configureTacticalMode(GameController controller) {
         SkillSystem skills = controller.getPlayerSkills();
+        skills.reset();
         skills.addSkill(Skill.SONAR, 2);
         skills.addSkill(Skill.RADAR, 2);
         skills.addSkill(Skill.DRONE, 2);
@@ -489,6 +408,7 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
 
     private void configureAsymmetricMode(GameController controller) {
         SkillSystem skills = controller.getPlayerSkills();
+        skills.reset();
         skills.addSkill(Skill.SONAR, 3);
         skills.addSkill(Skill.JAMMING, 2);
         skills.addSkill(Skill.REPAIR, 3);
@@ -498,6 +418,7 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
 
     private void configureLightningMode(GameController controller) {
         SkillSystem skills = controller.getPlayerSkills();
+        skills.reset();
         skills.addSkill(Skill.GUIDED_MISSILE, 3);
         skills.addSkill(Skill.CLUSTER_BOMB, 3);
         skills.addSkill(Skill.DRONE, 1);
@@ -506,6 +427,7 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
 
     private void configureSwarmMode(GameController controller) {
         SkillSystem skills = controller.getPlayerSkills();
+        skills.reset();
         skills.addSkill(Skill.SONAR, 4);
         skills.addSkill(Skill.RADAR, 3);
         skills.addSkill(Skill.DRONE, 3);
@@ -524,21 +446,8 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
 
     private void continueGame() {
         try {
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/view/GuardadosView.fxml"));
+            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/cenit/battleship/view/SavedView.fxml"));
             Parent root = loader.load();
-
-            SavedViewController controller = loader.getController();
-            controller.setSaveGameListener(new SavedViewController.SaveGameListener() {
-                @Override
-                public void onPartidaCargada(String nombreArchivo) {
-                    loadGame(nombreArchivo);
-                }
-
-                @Override
-                public void onDialogoCerrado() {
-                    // No hacer nada
-                }
-            });
 
             Stage stage = new Stage();
             stage.setTitle("Cargar Partida Guardada");
@@ -553,19 +462,26 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
         }
     }
 
-    private void loadGame(String nombreArchivo) {
+    private void openConfiguration() {
         try {
-            GameController gameControllerCargado = storageService.loadGame(nombreArchivo);
-            if (gameControllerCargado != null) {
-                GameViewController.setGameController(gameControllerCargado);
-                App.changeView("view/GameView");
-            } else {
-                showAlert("Error", "No se pudo cargar la partida seleccionada.");
-            }
+            App.changeView("view/ConfigurationView");
         } catch (Exception ex) {
             ex.printStackTrace();
-            showAlert("Error", "Error al cargar la partida: " + ex.getMessage());
+            showAlert("Error", "No se pudo abrir la configuración: " + ex.getMessage());
         }
+    }
+
+    private void exitGame() {
+        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
+        confirmacion.setTitle("Salir del Juego");
+        confirmacion.setHeaderText("¿Estás seguro de que quieres salir?");
+        confirmacion.setContentText("Cualquier progreso no guardado se perderá.");
+
+        confirmacion.showAndWait().ifPresent(response -> {
+            if (response == ButtonType.OK) {
+                App.getPrimaryStage().close();
+            }
+        });
     }
 
     private String promptForPlayerNameWithValidation() {
@@ -578,12 +494,12 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
         if (result.isPresent()) {
             String name = result.get().trim();
             if (isValidPlayerName(name)) {
-                Configuration.getInstance().setPlayerName(name);
+                GameConfiguration.getInstance().setPlayerName(name);
                 return name;
             } else {
                 showAlert("Nombre Inválido",
                         "El nombre debe tener entre 2 y 15 caracteres y solo contener letras y espacios.");
-                return promptForPlayerNameWithValidation(); // Recursivo hasta obtener nombre válido
+                return promptForPlayerNameWithValidation();
             }
         }
         return "Comandante";
@@ -612,28 +528,6 @@ private void startNewGame(ActionEvent event) { // <-- CAMBIO 1: Añadimos 'Actio
         }
 
         return true;
-    }
-
-    private void openConfiguration() {
-        try {
-            App.changeView("view/ConfigurationView");
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            showAlert("Error", "No se pudo abrir la configuración: " + ex.getMessage());
-        }
-    }
-
-    private void exitGame() {
-        Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
-        confirmacion.setTitle("Salir del Juego");
-        confirmacion.setHeaderText("¿Estás seguro de que quieres salir?");
-        confirmacion.setContentText("Cualquier progreso no guardado se perderá.");
-
-        confirmacion.showAndWait().ifPresent(response -> {
-            if (response == ButtonType.OK) {
-                App.getPrimaryStage().close();
-            }
-        });
     }
 
     private void showAlert(String titulo, String mensaje) {
