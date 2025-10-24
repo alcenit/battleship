@@ -51,7 +51,7 @@ public class GameConfiguration {
     public static final int DEFAULT_BOARD_SIZE = 15;
     public static final int DEFAULT_CELL_SIZE = 40;
     
-    private GameConfiguration() {
+    public GameConfiguration() {
         loadConfiguration();
     }
     

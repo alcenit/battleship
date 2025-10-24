@@ -43,7 +43,7 @@ public class SoundController {
     private void loadSounds() {
         try {
             // Cargar efectos de sonido básicos del juego
-            loadEffect("water_splash", "/sounds/water_splash.wav");
+            loadEffect("water_splash", "/sounds/water_splash.mp3");
             loadEffect("explosion", "/sounds/explosion.wav");
             loadEffect("ship_sinking", "/sounds/ship_sinking.wav");
             loadEffect("place_ship", "/sounds/place_ship.wav");

@@ -10,7 +10,6 @@ import java.util.List;
  * Representa un barco en el juego de batalla naval con tracking de daño por
  * segmento
  *
- * @author Usuario
  */
 public class Ship {
 
@@ -35,8 +34,12 @@ public class Ship {
     // ========== POSICIONAMIENTO ==========
     /**
      * Establece la posición del barco y inicializa el tracking de daño
+     *
+     * @param coordinates Lista de coordenadas
+     * @param direction Dirección explícita (opcional - si es null, se calcula
+     * automáticamente)
      */
-    public void setPosition(List<Coordinate> coordinates) {
+    public void setPosition(List<Coordinate> coordinates, Direction direction) {
         if (coordinates == null) {
             throw new IllegalArgumentException("La lista de coordenadas no puede ser nula");
         }
@@ -55,12 +58,34 @@ public class Ship {
 
         this.coordinates = new ArrayList<>(coordinates);
         initializeSegmentDamage();
-        determineDirection(coordinates);
+
+        // USAR LA DIRECCIÓN PROPORCIONADA O CALCULARLA SI ES NULL
+        if (direction != null) {
+            this.direction = direction;
+        } else {
+            determineDirection(coordinates);
+        }
 
         System.out.println("📍 Barco " + type.getName() + " posicionado en "
                 + coordinates.get(0).aNotacion() + " a "
                 + coordinates.get(coordinates.size() - 1).aNotacion()
-                + " (" + direction + ")");
+                + " (" + this.direction + ")");
+    }
+
+    // Sobrecarga para mantener compatibilidad
+    public void setPosition(List<Coordinate> coordinates) {
+        setPosition(coordinates, null); // Usar dirección calculada
+    }
+
+    /**
+     * Establece la dirección del barco explícitamente
+     */
+    public void setDirection(Direction direction) {
+        if (direction == null) {
+            throw new IllegalArgumentException("La dirección no puede ser nula");
+        }
+        this.direction = direction;
+        System.out.println("🔄 Dirección de " + type.getName() + " establecida a: " + direction);
     }
 
     /**
@@ -76,6 +101,9 @@ public class Ship {
     /**
      * Determina la dirección del barco basado en sus coordenadas
      */
+    /**
+     * Determina la dirección del barco basado en sus coordenadas
+     */
     private void determineDirection(List<Coordinate> coordinates) {
         if (coordinates.size() <= 1) {
             this.direction = Direction.HORIZONTAL;
@@ -85,13 +113,16 @@ public class Ship {
         Coordinate first = coordinates.get(0);
         Coordinate second = coordinates.get(1);
 
+        // LÓGICA CORREGIDA - debe coincidir con GameController
         if (first.getX() == second.getX()) {
-            this.direction = Direction.VERTICAL;
+            this.direction = Direction.HORIZONTAL; // Misma fila = HORIZONTAL
         } else if (first.getY() == second.getY()) {
-            this.direction = Direction.HORIZONTAL;
+            this.direction = Direction.VERTICAL;   // Misma columna = VERTICAL
         } else {
             throw new IllegalArgumentException("El barco debe estar en línea recta horizontal o vertical");
         }
+
+        System.out.println("🧭 Dirección calculada para " + type.getName() + ": " + this.direction);
     }
 
     /**

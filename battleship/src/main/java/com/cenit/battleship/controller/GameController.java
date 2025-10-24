@@ -190,6 +190,10 @@ public class GameController {
     // ========== MÉTODOS DE COLOCACIÓN DE BARCOS ==========
     /**
      * Verifica si un barco puede colocarse en la posición especificada
+     * @param ship
+     * @param coord
+     * @param direction
+     * @return 
      */
     public boolean canPlaceShip(Ship ship, Coordinate coord, Direction direction) {
         if (ship == null || coord == null || direction == null) {
@@ -228,38 +232,43 @@ public class GameController {
      * @return 
      */
     public boolean placeShip(Ship ship, Coordinate startCoord, Direction direction) {
-        if (!canPlaceShip(ship, startCoord, direction)) {
-            return false;
-        }
-
-        try {
-            List<Coordinate> shipCoordinates = calculateShipCoordinates(ship, startCoord, direction);
-
-            // Establecer la posición en el objeto Ship
-            ship.setPosition(shipCoordinates);
-
-            // También agregar a las celdas del tablero
-            for (Coordinate coord : shipCoordinates) {
-                Cell cell = playerBoard.getCell(coord);
-                if (cell != null) {
-                    cell.setShip(ship);
-                }
-            }
-
-            // Agregar a la lista de barcos del jugador si no está ya
-            if (!playerShips.contains(ship)) {
-                playerShips.add(ship);
-            }
-
-            System.out.println("✅ " + ship.getType().getName() + " colocado exitosamente en " + 
-                             startCoord.aNotacion() + " (" + direction + ")");
-            return true;
-
-        } catch (Exception e) {
-            System.err.println("❌ Error al colocar barco: " + e.getMessage());
-            return false;
-        }
+    if (!canPlaceShip(ship, startCoord, direction)) {
+        return false;
     }
+
+    try {
+        List<Coordinate> shipCoordinates = calculateShipCoordinates(ship, startCoord, direction);
+
+        // DEBUG: Verificar dirección antes de establecer
+        System.out.println("🔧 DEBUG placeShip - Start: " + startCoord.aNotacion() + 
+                         ", Input Dir: " + direction + 
+                         ", Coords: " + shipCoordinates);
+        
+        // Establecer la posición en el objeto Ship - USANDO LA DIRECCIÓN EXPLÍCITA
+        ship.setPosition(shipCoordinates, direction); // ← PASA LA DIRECCIÓN EXPLÍCITAMENTE
+
+        // También agregar a las celdas del tablero
+        for (Coordinate coord : shipCoordinates) {
+            Cell cell = playerBoard.getCell(coord);
+            if (cell != null) {
+                cell.setShip(ship);
+            }
+        }
+
+        // Agregar a la lista de barcos del jugador si no está ya
+        if (!playerShips.contains(ship)) {
+            playerShips.add(ship);
+        }
+
+        System.out.println("✅ " + ship.getType().getName() + " colocado exitosamente en " + 
+                         startCoord.aNotacion() + " (" + direction + ")");
+        return true;
+
+    } catch (Exception e) {
+        System.err.println("❌ Error al colocar barco: " + e.getMessage());
+        return false;
+    }
+}
 
     /**
      * Calcula todas las coordenadas que ocuparía el barco
@@ -409,6 +418,8 @@ public class GameController {
     // ========== MÉTODOS DE DISPARO ==========
     /**
      * Procesa un disparo del jugador humano
+     * @param target
+     * @return 
      */
     public ShotResult processPlayerShot(Coordinate target) {
         if (!playerTurn || gamePhase != GamePhase.IN_PLAY) {
@@ -1381,6 +1392,7 @@ private int getMinFleetCells() {
 
     /**
      * Verifica si las flotas están balanceadas
+     * @return 
      */
     public boolean areFleetsBalanced() {
         int playerPower = calculateFleetPower(playerShips);

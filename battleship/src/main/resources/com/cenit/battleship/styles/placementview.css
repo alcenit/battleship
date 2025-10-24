@@ -1,11 +1,192 @@
-/*
- * Empty Stylesheet file.
- */
+/* ======================================================== */
+/*  ESTILOS PRINCIPALES PARA EL JUEGO BATTLESHIP          */
+/*  Versión optimizada y organizada                        */
+/* ======================================================== */
 
-.mainFxmlClass {
+/* ======================================================== */
+/*  1. ESTILOS DE COMPONENTES DE BARCOS (ShipRenderer)     */
+/*  Estos estilos dan forma a los barcos creados dinámicamente */
+/* ======================================================== */
 
+/*estilos overlayer*/
+.overlay-layer {
+    -fx-background-color: transparent;
 }
-/* Estilos para etiquetas de dificultad */
+
+/* Estilos para debugging */
+.debug-overlay {
+    -fx-border-color: red;
+    -fx-border-width: 2;
+    -fx-background-color: rgba(255, 0, 0, 0.1);
+}
+
+.ship-overlay {
+    -fx-opacity: 0.8;
+}
+
+
+.barco-overlay {
+    -fx-background-color: transparent;
+}
+
+.barco-icono {
+    -fx-background-color: transparent;
+    -fx-alignment: center;
+    -fx-content-display: center;
+}
+
+/* Estilos para imágenes de barcos */
+.barco-icono .image-view {
+    -fx-padding: 0;
+    -fx-margin: 0;
+}
+
+/* Contenedor principal que se añade al botón de la casilla */
+.barco-container {
+    -fx-alignment: center;
+}
+
+/* Layout que contiene los segmentos del barco (HBox o VBox) */
+.barco-grafico {
+    -fx-alignment: center;
+}
+.barco-overlay {
+    -fx-background-color: transparent;
+}
+
+.barco-icono {
+    -fx-background-color: transparent;
+    -fx-alignment: center;
+}
+
+/* Estilos para barcos horizontales */
+.barco-horizontal {
+    -fx-alignment: center-left;
+}
+
+/* Estilos para barcos verticales */
+.barco-vertical {
+    -fx-alignment: top-center;
+}
+
+/* Overlay layer principal */
+.overlay-layer {
+    -fx-background-color: transparent;
+}
+
+/* Clases para controlar la dirección del barco */
+.barco-horizontal {
+    -fx-spacing: 0px; /* Sin espacio entre segmentos */
+}
+
+.barco-vertical {
+    -fx-spacing: 0px; /* Sin espacio entre segmentos */
+}
+
+/* Estilo base para cada segmento individual del barco */
+.segmento-barco {
+    -fx-border-width: 1px;
+    -fx-border-radius: 3px;
+    -fx-background-radius: 3px;
+}
+
+/* Estados de un segmento de barco (en el panel lateral) */
+.segmento-barco.intacto {
+    -fx-background-color: #28a745; /* Verde */
+    -fx-border-color: #1e7e34;
+}
+
+.segmento-barco.danado {
+    -fx-background-color: #dc3545; /* Rojo */
+    -fx-border-color: #bd2130;
+}
+
+/* Icono de texto dentro del primer segmento del barco */
+.barco-icono {
+    -fx-font-size: 18px;
+    -fx-text-fill: #f8f9fa; /* Color claro para contraste */
+    -fx-font-weight: bold;
+}
+
+/* ======================================================== */
+/*  2. ESTILOS PARA PANEL LATERAL DE BARCOS               */
+/*  Estilos para la lista de barcos por colocar            */
+/* ======================================================== */
+
+/* Contenedor de un item en la lista (nombre + gráfico) */
+.barco-item {
+    -fx-alignment: center_left;
+    -fx-padding: 5px;
+    -fx-background-color: #f8f9fa;
+    -fx-border-color: #dee2e6;
+    -fx-border-radius: 5px;
+    -fx-background-radius: 5px;
+}
+
+/* Etiqueta con el nombre del barco */
+.barco-nombre {
+    -fx-font-weight: bold;
+    -fx-min-width: 120px;
+}
+
+/* Contenedor para la mini-representación del barco */
+.barco-representacion {
+    -fx-alignment: center;
+    -fx-spacing: 2px;
+}
+
+/* ======================================================== */
+/*  3. ESTILOS PARA CASILLAS DEL TABLERO DE JUEGO         */
+/*  Estilos para los botones que forman el GridPane        */
+/* ======================================================== */
+
+/* Casilla por defecto (agua) */
+.casilla-vacia {
+    -fx-background-color: #e3f2fd;
+    -fx-border-color: #90caf9;
+}
+
+/* Casilla que contiene un barco intacto */
+.casilla-barco {
+    -fx-background-color: #4A6572; /* Gris azulado, coincide con ShipRenderer */
+    -fx-border-color: #344955;
+    -fx-border-insets: -1; /* Hace que los bordes se unan */
+}
+
+/* Casilla con un barco dañado (impacto) */
+.casilla-barco-danado {
+    -fx-background-color: #ff5252;
+    -fx-border-color: #d32f2f;
+}
+
+/* Casilla con un disparo que ha fallado al agua */
+.casilla-fallo {
+    -fx-background-color: #87CEEB; /* Azul cielo */
+    -fx-border-color: #64B5F6;
+}
+
+/* Casilla resaltada al pasar el ratón (preview de colocación) */
+.casilla-resaltada {
+    -fx-background-color: #fff9c4;
+    -fx-border-color: #ffd54f;
+}
+
+/* ======================================================== */
+/*  4. ESTILOS DE DIFICULTAD Y OTROS PANELES              */
+/*  Estilos para la UI de configuración y dificultad       */
+/* ======================================================== */
+
+/* Panel de información de dificultad */
+.difficulty-panel {
+    -fx-padding: 10px;
+    -fx-background-color: linear-gradient(to bottom, #1e40af, #3730a3);
+    -fx-background-radius: 8px;
+    -fx-border-color: #4f46e5;
+    -fx-border-radius: 8px;
+    -fx-border-width: 2px;
+}
+
+/* Texto de la etiqueta de dificultad */
 .difficulty-easy {
     -fx-text-fill: #22c55e;
     -fx-font-weight: bold;
@@ -28,140 +209,4 @@
     -fx-text-fill: #dc2626;
     -fx-font-weight: bold;
     -fx-effect: dropshadow(gaussian, rgba(220, 38, 38, 0.3), 5, 0.3, 0, 1);
-}
-
-/* Panel de información de dificultad */
-.difficulty-panel {
-    -fx-padding: 10px;
-    -fx-background-color: linear-gradient(to bottom, #1e40af, #3730a3);
-    -fx-background-radius: 8px;
-    -fx-border-color: #4f46e5;
-    -fx-border-radius: 8px;
-    -fx-border-width: 2px;
-}
-
-.difficulty-panel.easy {
-    -fx-background-color: linear-gradient(to bottom, #16a34a, #15803d);
-    -fx-border-color: #22c55e;
-}
-
-.difficulty-panel.expert {
-    -fx-background-color: linear-gradient(to bottom, #dc2626, #991b1b);
-    -fx-border-color: #ef4444;
-}
-
-/* Estilos para los barcos */
-.barco-item {
-    -fx-alignment: CENTER_LEFT;
-    -fx-padding: 5px;
-    -fx-background-color: #f8f9fa;
-    -fx-border-color: #dee2e6;
-    -fx-border-radius: 5px;
-    -fx-background-radius: 5px;
-}
-
-.barco-nombre {
-    -fx-font-weight: bold;
-    -fx-min-width: 120px;
-}
-
-.barco-representacion {
-    -fx-alignment: CENTER;
-    -fx-spacing: 2px;
-}
-
-.segmento-barco {
-    -fx-min-width: 25px;
-    -fx-min-height: 25px;
-    -fx-background-color: #6c757d;
-    -fx-border-color: #495057;
-    -fx-border-width: 1px;
-    -fx-border-radius: 3px;
-    -fx-background-radius: 3px;
-}
-.casilla-barco {
-    -fx-background-color: #37474F;
-    -fx-border-color: #546E7A;
-    -fx-border-insets: -1; /* Hace que los bordes se unan */
-}
-
-.segmento-barco.danado {
-    -fx-background-color: #dc3545;
-}
-
-.segmento-barco.intacto {
-    -fx-background-color: #28a745;
-}
-
-/* Estilos para el tablero con barcos */
-.casilla-vacia {
-    -fx-background-color: #e3f2fd;
-    -fx-border-color: #90caf9;
-}
-
-
-
-.casilla-barco-danado {
-    -fx-background-color: #ff5252;
-    -fx-border-color: #d32f2f;
-}
-
-.casilla-resaltada {
-    -fx-background-color: #fff9c4;
-    -fx-border-color: #ffd54f;
-}
-
-/* Contenedor del barco en el tablero */
-.barco-container {
-    -fx-alignment: CENTER;
-}
-
-.barco-grafico {
-    -fx-alignment: CENTER;
-}
-
-.barco-horizontal {
-    -fx-spacing: 0px;
-}
-
-.barco-vertical {
-    -fx-spacing: 0px;
-}
-
-/* Iconos de barcos */
-.barco-icono {
-    -fx-font-size: 18px;
-    -fx-text-fill: #2c3e50;
-    -fx-font-weight: bold;
-}
-
-/* Estilos para celdas */
-.casilla-agua {
-    -fx-background-color: #1E90FF;
-    -fx-border-color: #90CAF9;
-}
-
-.casilla-barco {
-    -fx-background-color: #4A6572;
-    -fx-border-color: #344955;
-}
-
-.casilla-impacto {
-    -fx-background-color: #FF5252;
-    -fx-border-color: #D32F2F;
-}
-
-.casilla-fallo {
-    -fx-background-color: #87CEEB;
-    -fx-border-color: #64B5F6;
-}
-
-.casilla-hundido {
-    -fx-background-color: #8B0000;
-    -fx-border-color: #600000;
-}
-
-.casilla-resaltada {
-    -fx-background-color: #FFF9C4;
-    -fx-border-color: #FFD54F;
 }
