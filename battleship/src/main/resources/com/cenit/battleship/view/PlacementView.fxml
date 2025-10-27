@@ -21,7 +21,7 @@
       <GridPane fx:id="boardPlayer" hgap="2" vgap="2"/>
       
       <HBox spacing="10" alignment="CENTER">
-         <Button fx:id="btnRotate" text="Horizontal" prefWidth="100"/>
+         <Button fx:id="btnRotate" text="Vertical" prefWidth="100"/>
          <Button fx:id="btnAleatory" text="Aleatorio" prefWidth="100"/>
          <Button fx:id="btnBeging" text="Comenzar" prefWidth="100" disable="true"/>
       </HBox>

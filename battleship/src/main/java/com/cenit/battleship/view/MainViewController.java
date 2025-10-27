@@ -18,6 +18,7 @@ import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
@@ -30,7 +31,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
-import javafx.scene.control.TextInputDialog;
+import javafx.scene.control.TextField;
 import javafx.scene.layout.VBox;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -53,6 +54,8 @@ public class MainViewController implements Initializable {
     private ComboBox<String> comboDifficulty;
     @FXML
     private Label lblTitle;
+    @FXML
+    private TextField txtPlayerName;
 
     private StorageService storageService;
 
@@ -85,11 +88,26 @@ public class MainViewController implements Initializable {
         );
         comboDifficulty.setValue("Normal");
 
+        // CARGAR NOMBRE EXISTENTE SI EXISTE
+        String savedName = GameConfiguration.getInstance().getPlayerName();
+        if (savedName != null && !savedName.trim().isEmpty()) {
+            txtPlayerName.setText(savedName);
+        } else {
+            txtPlayerName.setText("Comandante"); // Valor por defecto
+        }
+        //ancho del box del texto
+        txtPlayerName.setPrefWidth(250);
+        txtPlayerName.setMaxWidth(250);
+
         // Estilos
         btnNewGame.getStyleClass().add("btn-primary");
         btnContinue.getStyleClass().add("btn-secondary");
         btnConfiguration.getStyleClass().add("btn-secondary");
         btnExit.getStyleClass().add("btn-danger");
+
+        // Estilo para el campo de nombre
+        txtPlayerName.getStyleClass().add("text-field-custom");
+
     }
 
     private void configureEvents() {
@@ -97,6 +115,11 @@ public class MainViewController implements Initializable {
         btnContinue.setOnAction(e -> continueGame());
         btnConfiguration.setOnAction(e -> openConfiguration());
         btnExit.setOnAction(e -> exitGame());
+
+        // Validación en tiempo real del nombre
+        txtPlayerName.textProperty().addListener((observable, oldValue, newValue) -> {
+            validatePlayerNameInRealTime(newValue);
+        });
     }
 
     @FXML
@@ -111,11 +134,11 @@ public class MainViewController implements Initializable {
 
             // 2. Obtener configuración del juego
             String gameMode = comboModeGame.getValue();
-            String playerName = ensureValidPlayerName();
+            String playerName = getValidatedPlayerName();
             Difficulty difficulty = convertDisplayToDifficulty(comboDifficulty.getValue());
 
             // 3. Guardar configuraciones actuales
-            saveCurrentSettings(gameMode, difficulty);
+            saveCurrentSettings(gameMode, difficulty, playerName);
 
             // 4. Crear y configurar el controlador del juego
             GameController gameController = createAndConfigureGame(gameMode, difficulty);
@@ -125,7 +148,7 @@ public class MainViewController implements Initializable {
 
             // 6. Obtener la ventana actual (Stage) desde el evento del botón
             Stage currentStage = (Stage) ((Node) event.getSource()).getScene().getWindow();
-            
+
             // 7. Preparar y mostrar la siguiente vista
             if (!prepareNextView(currentStage, gameController, gameMode, playerName)) {
                 System.err.println("❌ No se pudo preparar la vista de colocación. Abortando.");
@@ -139,6 +162,102 @@ public class MainViewController implements Initializable {
         }
     }
 
+    private boolean validateGameSelections() {
+        // PRIMERO validar el nombre
+        String playerName = txtPlayerName.getText().trim();
+        if (playerName.isEmpty()) {
+            showAlert("Nombre Requerido", "Por favor ingresa tu nombre para continuar.");
+            txtPlayerName.requestFocus();
+            return false;
+        }
+
+        if (!isValidPlayerName(playerName)) {
+            showAlert("Nombre Inválido",
+                    "El nombre debe tener entre 2 y 15 caracteres y solo contener letras y espacios.");
+            txtPlayerName.requestFocus();
+            txtPlayerName.selectAll();
+            return false;
+        }
+
+        if (comboModeGame.getValue() == null || comboModeGame.getValue().isEmpty()) {
+            showAlert("Modo de Juego Requerido",
+                    "Por favor selecciona un modo de juego para continuar.");
+            comboModeGame.requestFocus();
+            return false;
+        }
+
+        if (comboDifficulty.getValue() == null || comboDifficulty.getValue().isEmpty()) {
+            showAlert("Dificultad Requerida",
+                    "Por favor selecciona un nivel de dificultad.");
+            comboDifficulty.requestFocus();
+            return false;
+        }
+
+        System.out.println("✅ Validaciones pasadas - Listo para iniciar juego");
+        return true;
+    }
+
+    /**
+     * NUEVO MÉTODO: Obtener y validar nombre desde el TextField
+     */
+    private String getValidatedPlayerName() {
+        String playerName = txtPlayerName.getText().trim();
+
+        // Aplicar validación final
+        if (!isValidPlayerName(playerName)) {
+            // Esto no debería pasar si la validación anterior funcionó
+            playerName = "Comandante";
+        }
+
+        // Capitalizar nombre (primera letra de cada palabra en mayúscula)
+        playerName = capitalizeName(playerName);
+
+        System.out.println("👤 Jugador: " + playerName);
+        return playerName;
+    }
+
+    /**
+     * NUEVO MÉTODO: Validación en tiempo real
+     */
+    private void validatePlayerNameInRealTime(String name) {
+        if (name.length() > 15) {
+            // Limitar a 15 caracteres
+            Platform.runLater(() -> {
+                txtPlayerName.setText(name.substring(0, 15));
+                txtPlayerName.positionCaret(15);
+            });
+        }
+
+        // Cambiar color del borde según validación
+        if (name.trim().isEmpty()) {
+            txtPlayerName.setStyle("-fx-border-color: lightgray;");
+        } else if (isValidPlayerName(name)) {
+            txtPlayerName.setStyle("-fx-border-color: green; -fx-border-width: 1;");
+        } else {
+            txtPlayerName.setStyle("-fx-border-color: orange; -fx-border-width: 1;");
+        }
+    }
+
+    /**
+     * MÉTODO ACTUALIZADO: Guardar configuración incluyendo nombre
+     */
+    private void saveCurrentSettings(String gameMode, Difficulty difficulty, String playerName) {
+        try {
+            GameConfiguration config = GameConfiguration.getInstance();
+            config.setGameMode(gameMode);
+            config.setCpuDifficulty(difficulty);
+            config.setPlayerName(playerName); // GUARDAR NOMBRE
+            config.saveConfiguration();
+            System.out.println("💾 Configuraciones guardadas: Jugador=" + playerName
+                    + ", Modo=" + gameMode + ", Dificultad=" + difficulty);
+        } catch (Exception e) {
+            System.err.println("⚠️ Error guardando configuraciones: " + e.getMessage());
+        }
+    }
+
+    /**
+     * MÉTODO ACTUALIZADO: Cargar configuraciones guardadas
+     */
     private void loadSavedSettings() {
         try {
             GameConfiguration config = GameConfiguration.getInstance();
@@ -158,9 +277,37 @@ public class MainViewController implements Initializable {
                 }
             }
 
+            // Cargar nombre guardado
+            String savedName = config.getPlayerName();
+            if (savedName != null && !savedName.trim().isEmpty()) {
+                txtPlayerName.setText(savedName);
+            }
+
         } catch (Exception e) {
             System.err.println("⚠️ Error cargando configuraciones guardadas: " + e.getMessage());
         }
+    }
+
+    /**
+     * NUEVO MÉTODO: Capitalizar nombre (primera letra de cada palabra)
+     */
+    private String capitalizeName(String name) {
+        if (name == null || name.trim().isEmpty()) {
+            return name;
+        }
+
+        String[] words = name.trim().split("\\s+");
+        StringBuilder capitalized = new StringBuilder();
+
+        for (String word : words) {
+            if (word.length() > 0) {
+                capitalized.append(Character.toUpperCase(word.charAt(0)))
+                        .append(word.substring(1).toLowerCase())
+                        .append(" ");
+            }
+        }
+
+        return capitalized.toString().trim();
     }
 
     private String convertDifficultyToDisplay(String difficulty) {
@@ -191,41 +338,6 @@ public class MainViewController implements Initializable {
             default:
                 return Difficulty.NORMAL;
         }
-    }
-
-    private boolean validateGameSelections() {
-        if (comboModeGame.getValue() == null || comboModeGame.getValue().isEmpty()) {
-            showAlert("Modo de Juego Requerido",
-                    "Por favor selecciona un modo de juego para continuar.");
-            comboModeGame.requestFocus();
-            return false;
-        }
-
-        if (comboDifficulty.getValue() == null || comboDifficulty.getValue().isEmpty()) {
-            showAlert("Dificultad Requerida",
-                    "Por favor selecciona un nivel de dificultad.");
-            comboDifficulty.requestFocus();
-            return false;
-        }
-
-        System.out.println("✅ Validaciones pasadas - Listo para iniciar juego");
-        return true;
-    }
-
-    private String ensureValidPlayerName() {
-        String playerName = GameConfiguration.getInstance().getPlayerName();
-
-        if (playerName == null || playerName.trim().isEmpty() || !isValidPlayerName(playerName)) {
-            playerName = promptForPlayerNameWithValidation();
-
-            if (playerName == null || playerName.trim().isEmpty()) {
-                playerName = "Comandante";
-                GameConfiguration.getInstance().setPlayerName(playerName);
-            }
-        }
-
-        System.out.println("👤 Jugador: " + playerName);
-        return playerName;
     }
 
     private void saveCurrentSettings(String gameMode, Difficulty difficulty) {
@@ -368,12 +480,18 @@ public class MainViewController implements Initializable {
         System.out.println("🎮 Configurando modo: " + gameMode);
 
         switch (gameMode) {
-            case "Flota Especial" -> configureSpecialFleetMode(controller);
-            case "Táctico" -> configureTacticalMode(controller);
-            case "Asimétrico" -> configureAsymmetricMode(controller);
-            case "Relámpago" -> configureLightningMode(controller);
-            case "Enjambre" -> configureSwarmMode(controller);
-            default -> configureClassicMode(controller);
+            case "Flota Especial" ->
+                configureSpecialFleetMode(controller);
+            case "Táctico" ->
+                configureTacticalMode(controller);
+            case "Asimétrico" ->
+                configureAsymmetricMode(controller);
+            case "Relámpago" ->
+                configureLightningMode(controller);
+            case "Enjambre" ->
+                configureSwarmMode(controller);
+            default ->
+                configureClassicMode(controller);
         }
     }
 
@@ -482,27 +600,6 @@ public class MainViewController implements Initializable {
                 App.getPrimaryStage().close();
             }
         });
-    }
-
-    private String promptForPlayerNameWithValidation() {
-        TextInputDialog dialog = new TextInputDialog();
-        dialog.setTitle("Nombre del Jugador");
-        dialog.setHeaderText("Ingresa tu nombre");
-        dialog.setContentText("Nombre:");
-
-        Optional<String> result = dialog.showAndWait();
-        if (result.isPresent()) {
-            String name = result.get().trim();
-            if (isValidPlayerName(name)) {
-                GameConfiguration.getInstance().setPlayerName(name);
-                return name;
-            } else {
-                showAlert("Nombre Inválido",
-                        "El nombre debe tener entre 2 y 15 caracteres y solo contener letras y espacios.");
-                return promptForPlayerNameWithValidation();
-            }
-        }
-        return "Comandante";
     }
 
     private boolean isValidPlayerName(String name) {

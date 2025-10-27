@@ -22,6 +22,13 @@
         <version>0.0.8</version>
         <configuration>
           <mainClass>com.cenit.battleship.App</mainClass>
+          <options>
+            <option>--enable-native-access=ALL-UNNAMED</option>
+            <option>--add-opens=java.base/java.lang=ALL-UNNAMED</option>
+            <option>--add-opens=java.base/java.util=ALL-UNNAMED</option>
+            <option>--add-opens=javafx.graphics/com.sun.glass.utils=ALL-UNNAMED</option>
+            <option>--add-opens=javafx.graphics/com.sun.javafx.application=ALL-UNNAMED</option>
+          </options>
         </configuration>
       </plugin>
       <plugin>

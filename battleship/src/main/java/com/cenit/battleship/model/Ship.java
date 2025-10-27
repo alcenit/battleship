@@ -22,6 +22,8 @@ public class Ship {
     // Array para trackear qué segmentos están dañados
     private List<Boolean> segmentDamage;
 
+    private final GameConfiguration config = GameConfiguration.getInstance();
+
     public Ship(ShipType type) {
         this.type = type;
         this.positions = new ArrayList<>();
@@ -29,6 +31,163 @@ public class Ship {
         this.impactsReceived = 0;
         this.direction = Direction.HORIZONTAL;
         this.segmentDamage = new ArrayList<>();
+    }
+
+    /**
+     * Obtiene todos los segmentos (coordenadas) que ocupa el barco Este es el
+     * método que necesitas para la validación de colocación
+     */
+    public List<Coordinate> getSegments() {
+        return Collections.unmodifiableList(coordinates);
+    }
+
+    /**
+     * Calcula y devuelve los segmentos basados en posición inicial, dirección y
+     * tamaño Útil para validación antes de colocar el barco
+     */
+    public List<Coordinate> calculateSegments(Coordinate start, Direction dir, int size) {
+        List<Coordinate> calculatedSegments = new ArrayList<>();
+        int dx = dir == Direction.HORIZONTAL ? 0 : 1;
+        int dy = dir == Direction.HORIZONTAL ? 1 : 0;
+
+        for (int i = 0; i < size; i++) {
+            int x = start.getX() + i * dx;
+            int y = start.getY() + i * dy;
+
+            // Validar que la coordenada esté dentro del tablero
+            if (x >= 0 && x < config.getBoardSize()
+                    && y >= 0 && y < config.getBoardSize()) {
+                calculatedSegments.add(new Coordinate(x, y));
+            } else {
+                // Si alguna coordenada está fuera, devolver lista vacía
+                return new ArrayList<>();
+            }
+        }
+
+        return calculatedSegments;
+    }
+
+    /**
+     * Coloca el barco en una posición específica con dirección
+     */
+    public boolean place(Coordinate start, Direction direction) {
+        List<Coordinate> newSegments = calculateSegments(start, direction, type.getSize());
+
+        if (newSegments.size() != type.getSize()) {
+            System.err.println("❌ No se puede colocar " + type.getName()
+                    + " en " + start.aNotacion() + " - coordenadas inválidas");
+            return false;
+        }
+
+        this.coordinates = newSegments;
+        this.direction = direction;
+        initializeSegmentDamage();
+
+        System.out.println("📍 " + type.getName() + " colocado en "
+                + coordinates.get(0).aNotacion() + " a "
+                + coordinates.get(coordinates.size() - 1).aNotacion()
+                + " (" + direction + ")");
+        return true;
+    }
+
+    /**
+     * Sobrecarga para colocar con coordenadas x,y
+     */
+    public boolean place(int startX, int startY, Direction direction) {
+        return place(new Coordinate(startX, startY), direction);
+    }
+
+    /**
+     * Obtiene todas las coordenadas adyacentes al barco (para validación de no
+     * contacto)
+     */
+    public List<Coordinate> getAdjacentCoordinates() {
+        List<Coordinate> adjacent = new ArrayList<>();
+
+        for (Coordinate segment : coordinates) {
+            // Revisar las 8 direcciones alrededor de cada segmento
+            for (int dx = -1; dx <= 1; dx++) {
+                for (int dy = -1; dy <= 1; dy++) {
+                    if (dx == 0 && dy == 0) {
+                        continue; // Saltar el segmento mismo
+                    }
+                    int adjX = segment.getX() + dx;
+                    int adjY = segment.getY() + dy;
+
+                    // Verificar límites del tablero
+                    if (adjX >= 0 && adjX < config.getBoardSize()
+                            && adjY >= 0 && adjY < config.getBoardSize()) {
+
+                        Coordinate adjCoord = new Coordinate(adjX, adjY);
+
+                        // Solo agregar si no es parte del barco y no está ya en la lista
+                        if (!coordinates.contains(adjCoord) && !adjacent.contains(adjCoord)) {
+                            adjacent.add(adjCoord);
+                        }
+                    }
+                }
+            }
+        }
+
+        return adjacent;
+    }
+
+    /**
+     * Verifica si este barco se superpone con otro barco
+     */
+    public boolean overlapsWith(Ship other) {
+        for (Coordinate myCoord : coordinates) {
+            for (Coordinate otherCoord : other.getSegments()) {
+                if (myCoord.equals(otherCoord)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Verifica si este barco está demasiado cerca de otro barco (adyacente)
+     */
+    public boolean isTooCloseTo(Ship other) {
+        List<Coordinate> myAdjacent = getAdjacentCoordinates();
+        for (Coordinate otherCoord : other.getSegments()) {
+            if (myAdjacent.contains(otherCoord)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Verifica si el barco puede ser colocado en la posición especificada Sin
+     * superponerse o estar demasiado cerca de otros barcos
+     */
+    public boolean canBePlacedAt(Coordinate start, Direction direction, List<Ship> otherShips) {
+        // Calcular segmentos potenciales
+        List<Coordinate> potentialSegments = calculateSegments(start, direction, type.getSize());
+
+        // Verificar que todas las coordenadas sean válidas
+        if (potentialSegments.size() != type.getSize()) {
+            return false;
+        }
+
+        // Crear un barco temporal para validación
+        Ship tempShip = new Ship(this.type);
+        tempShip.coordinates = potentialSegments;
+        tempShip.direction = direction;
+
+        // Verificar contra otros barcos
+        for (Ship otherShip : otherShips) {
+            if (tempShip.overlapsWith(otherShip)) {
+                return false;
+            }
+            if (tempShip.isTooCloseTo(otherShip)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     // ========== POSICIONAMIENTO ==========

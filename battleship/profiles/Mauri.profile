@@ -1,9 +1,9 @@
 {
-  "playerId": "84fa1c82-68bb-4bdc-8bf4-92797bb9503f",
-  "playerName": "Jugador",
+  "playerId": "4a17212a-9d57-45db-8021-5127e681144f",
+  "playerName": "Mauri",
   "avatar": "🚢",
-  "creationDate": "Oct 19, 2025, 8:04:29 PM",
-  "lastPlayed": "Oct 24, 2025, 11:56:43 AM",
+  "creationDate": "Oct 24, 2025, 12:54:17 PM",
+  "lastPlayed": "Oct 27, 2025, 3:10:12 PM",
   "statistics": {
     "gamesPlayed": 0,
     "gamesWon": 0,
@@ -22,20 +22,20 @@
     "fastestVictory": 2147483647,
     "slowestVictory": 0,
     "shipsSunkByType": {
-      "CRUISER": 0,
-      "SUBMARINE": 0,
+      "FRIGATE": 0,
       "CARRIER": 0,
-      "DESTROYER": 0,
+      "CRUISER": 0,
       "BATTLESHIP": 0,
-      "FRIGATE": 0
+      "DESTROYER": 0,
+      "SUBMARINE": 0
     },
     "shipsLostByType": {
-      "CRUISER": 0,
-      "SUBMARINE": 0,
+      "FRIGATE": 0,
       "CARRIER": 0,
-      "DESTROYER": 0,
+      "CRUISER": 0,
       "BATTLESHIP": 0,
-      "FRIGATE": 0
+      "DESTROYER": 0,
+      "SUBMARINE": 0
     },
     "victoriesByDifficulty": {
       "EXPERT": 0,
@@ -44,14 +44,14 @@
       "NORMAL": 0
     },
     "skillsUsed": {
-      "SONAR": 0,
+      "GUIDED_MISSILE": 0,
       "RADAR": 0,
       "CLUSTER_BOMB": 0,
       "JAMMING": 0,
       "DRONE": 0,
-      "CAMOUFLAGE": 0,
       "REPAIR": 0,
-      "GUIDED_MISSILE": 0
+      "CAMOUFLAGE": 0,
+      "SONAR": 0
     },
     "victoriesByGameMode": {},
     "mostShipsSunkInGame": 0,

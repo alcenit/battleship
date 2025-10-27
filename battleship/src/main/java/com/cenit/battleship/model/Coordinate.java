@@ -24,6 +24,31 @@ public record Coordinate(int x, int y) {
     }
 
     /**
+     * Verifica si esta coordenada es igual a otra (importante para contains()
+     * en listas)
+     */
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        Coordinate that = (Coordinate) obj;
+        return x == that.x && y == that.y;
+    }
+
+    /**
+     * HashCode consistente con equals (necesario para funcionamiento correcto
+     * en colecciones)
+     */
+    @Override
+    public int hashCode() {
+        return 31 * x + y;
+    }
+
+    /**
      * Convierte notación de batalla naval (A1, B5, etc.) a Coordinate
      *
      * @param notacion La notación en formato letra+número
@@ -46,9 +71,10 @@ public record Coordinate(int x, int y) {
             int x = letra - 'A';
             int y = Integer.parseInt(numeroStr) - 1;
 
-            // Validar rango
-            if (x < 0 || x >= 10 || y < 0 || y >= 10) {
-                throw new IllegalArgumentException("Coordenada fuera de rango: " + notacion);
+            // Usar el tamaño del tablero de la configuración
+            if (x < 0 || x >= config.getBoardSize() || y < 0 || y >= config.getBoardSize()) {
+                throw new IllegalArgumentException("Coordenada fuera de rango: " + notacion
+                        + " (Tablero: " + config.getBoardSize() + "x" + config.getBoardSize() + ")");
             }
 
             return new Coordinate(x, y);

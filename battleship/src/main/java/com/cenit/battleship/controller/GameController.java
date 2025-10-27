@@ -16,6 +16,7 @@ import com.cenit.battleship.model.enums.Direction;
 import com.cenit.battleship.model.enums.GamePhase;
 import com.cenit.battleship.model.enums.ShipType;
 import com.cenit.battleship.model.enums.ShotResult;
+import com.cenit.battleship.view.components.ShipRenderer;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -23,6 +24,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.StackPane;
 
 public class GameController {
 
@@ -1116,6 +1119,8 @@ private void logAsymmetricFleetAssignment(List<Ship> playerFleet, List<Ship> cpu
 
     System.out.println(sb.toString());
 }
+
+
 
 /**
  * Analiza el balance de las flotas asimétricas

@@ -11,8 +11,11 @@ import com.cenit.battleship.model.Ship;
 import com.cenit.battleship.model.enums.CellState;
 import com.cenit.battleship.model.enums.GamePhase;
 import com.cenit.battleship.model.enums.ShotResult;
+import com.cenit.battleship.model.GameConfiguration;
+import com.cenit.battleship.model.enums.Direction;
 import com.cenit.battleship.services.StorageService;
 import com.cenit.battleship.view.components.ShipRenderer;
+import static com.cenit.battleship.view.components.ShipRenderer.renderShipCorrected;
 import java.net.URL;
 import java.util.List;
 import java.util.Optional;
@@ -33,6 +36,7 @@ import javafx.scene.control.MenuItem;
 import javafx.scene.control.ProgressBar;
 import javafx.scene.control.TextInputDialog;
 import javafx.scene.control.Tooltip;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.StackPane;
@@ -49,6 +53,7 @@ public class GameViewController implements Initializable {
     private StorageService storageService;
     public SoundController soundController;
     private AnimationController animationController;
+    private final GameConfiguration config = GameConfiguration.getInstance();
 
     private boolean activeGame = true;
 
@@ -65,7 +70,7 @@ public class GameViewController implements Initializable {
     private Label lblCpuState;
     @FXML
     private Label lblSkillpoints;
-    
+
     // Controles del juego
     @FXML
     private Label lblTurn;
@@ -97,97 +102,95 @@ public class GameViewController implements Initializable {
     @FXML
     private MenuItem exitMenu;
 
-    // Matrices de botones
-    private final Button[][] playerBoardButtons = new Button[10][10];
-    private final Button[][] cpuBoardButtons = new Button[10][10];
+    // Matrices de botones - ahora dinámicas según el tamaño del tablero
+    private Button[][] playerBoardButtons;
+    private Button[][] cpuBoardButtons;
 
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        System.out.println("DEBUG: Entrando en initialize()");
 
+        // Inicializar matrices de botones con el tamaño correcto
+        int boardSize = config.getBoardSize();
+        playerBoardButtons = new Button[boardSize][boardSize];
+        cpuBoardButtons = new Button[boardSize][boardSize];
 
+        // --- Inicializaciones rápidas que SÍ pueden estar en el hilo principal ---
+        if (gameControllerStatic != null) {
+            this.gameController = gameControllerStatic;
+            gameControllerStatic = null;
+        } else {
+            this.gameController = new GameController();
+        }
 
-@Override
-public void initialize(URL location, ResourceBundle resources) {
-    System.out.println("DEBUG: Entrando en initialize()");
+        storageService = new StorageService();
+        soundController = SoundController.getInstance();
+        animationController = AnimationController.getInstance();
 
-    // --- Inicializaciones rápidas que SÍ pueden estar en el hilo principal ---
-    if (gameControllerStatic != null) {
-        this.gameController = gameControllerStatic;
-        gameControllerStatic = null;
-    } else {
-        this.gameController = new GameController();
+        // Preparamos la interfaz (los GridPane vacíos)
+        initializeInterface();
+        configureEvents();
+        configurarMenu();
+
+        // --- La parte pesada se ejecuta en un hilo secundario ---
+        Task<Void> gameSetupTask = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                // ¡ESTE CÓDIGO SE EJECUTA EN SEGUNDO PLANO!
+                // El hilo principal queda libre y puede mostrar la GameView inmediatamente.
+                System.out.println("DEBUG: Tarea en segundo plano: Iniciando startGame()");
+                startGame(); // <--- Movemos la llamada pesada AQUÍ
+                System.out.println("DEBUG: Tarea en segundo plano: startGame() finalizado.");
+                return null;
+            }
+        };
+
+        // Este código se ejecuta CUANDO la tarea en segundo plano termina
+        gameSetupTask.setOnSucceeded(event -> {
+            System.out.println("DEBUG: Tarea finalizada. Interfaz lista para ser usada.");
+            // Aquí podrías hacer actualizaciones finales de la UI si fueran necesarias
+            // después de que el juego se ha configurado completamente.
+            // Por ejemplo, actualizar un label con el nombre del jugador.
+
+        });
+
+        // Iniciamos la tarea en un nuevo hilo
+        Thread setupThread = new Thread(gameSetupTask);
+        setupThread.setDaemon(true); // Permite que la aplicación se cierre aunque este hilo siga corriendo
+        setupThread.start();
+
+        // Esto puede iniciarse en el hilo principal porque es solo reproducir música
+        soundController.startBackgroundMusic();
+
+        System.out.println("DEBUG: Saliendo de initialize(). La vista debería ser visible ahora.");
     }
 
-    storageService = new StorageService();
-    soundController = SoundController.getInstance();
-    animationController = AnimationController.getInstance();
-    
-    // Preparamos la interfaz (los GridPane vacíos)
-    initializeInterface(); 
-    configureEvents();
-    configurarMenu();
-
-    // --- La parte pesada se ejecuta en un hilo secundario ---
-    Task<Void> gameSetupTask = new Task<Void>() {
-        @Override
-        protected Void call() throws Exception {
-            // ¡ESTE CÓDIGO SE EJECUTA EN SEGUNDO PLANO!
-            // El hilo principal queda libre y puede mostrar la GameView inmediatamente.
-            System.out.println("DEBUG: Tarea en segundo plano: Iniciando startGame()");
-            startGame(); // <--- Movemos la llamada pesada AQUÍ
-            System.out.println("DEBUG: Tarea en segundo plano: startGame() finalizado.");
-            return null;
-        }
-    };
-
-    // Este código se ejecuta CUANDO la tarea en segundo plano termina
-    gameSetupTask.setOnSucceeded(event -> {
-        System.out.println("DEBUG: Tarea finalizada. Interfaz lista para ser usada.");
-        // Aquí podrías hacer actualizaciones finales de la UI si fueran necesarias
-        // después de que el juego se ha configurado completamente.
-        // Por ejemplo, actualizar un label con el nombre del jugador.
-        
-    });
-
-    // Iniciamos la tarea en un nuevo hilo
-    Thread setupThread = new Thread(gameSetupTask);
-    setupThread.setDaemon(true); // Permite que la aplicación se cierre aunque este hilo siga corriendo
-    setupThread.start();
-
-    // Esto puede iniciarse en el hilo principal porque es solo reproducir música
-    soundController.startBackgroundMusic(); 
-    
-    System.out.println("DEBUG: Saliendo de initialize(). La vista debería ser visible ahora.");
-}
-
     private void initializeInterface() {
-         System.out.println("DEBUG: Entrando en initializeInterface()"); // <-- sout de control
+        System.out.println("DEBUG: Entrando en initializeInterface()");
 
-        
-        
-
-        
         initializeBoard(playerBoard, playerBoardButtons, false);
         initializeBoard(cpuBoard, cpuBoardButtons, true);
         updateInformationPanels();
         updateSkills();
         updateSkillPoints();
-        System.out.println("DEBUG: Saliendo de initializeInterface()"); // <-- sout de control
+        System.out.println("DEBUG: Saliendo de initializeInterface()");
     }
 
     private void initializeBoard(GridPane board, Button[][] buttons, boolean isClickable) {
-        System.out.println("DEBUG: Entrando en initializeBoard()"); // <-- sout de control
+        System.out.println("DEBUG: Entrando en initializeBoard()");
 
-        
-
-        
         board.getChildren().clear();
 
-        // Agregar labels de coordenadas
-        addLabelsCoordinates(board);
+        int boardSize = config.getBoardSize();
+        int cellSize = config.getCellSize(); // Usar 40x40 desde configuración
 
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 10; j++) {
+        // Agregar labels de coordenadas
+        addLabelsCoordinates(board, boardSize);
+
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
                 Button button = new Button();
-                button.setPrefSize(35, 35);
+                button.setPrefSize(cellSize, cellSize); // Usar tamaño de configuración
                 button.getStyleClass().add("casilla-agua");
 
                 final int x = i;
@@ -206,7 +209,23 @@ public void initialize(URL location, ResourceBundle resources) {
         }
 
         updateBoardDisplay(buttons, isClickable);
-        System.out.println("DEBUG: Saliendo de initializeBoard()"); // <-- sout de control
+        System.out.println("DEBUG: Saliendo de initializeBoard()");
+    }
+
+    private void addLabelsCoordinates(GridPane board, int boardSize) {
+        // Letras (A-J) en la parte superior
+        for (int i = 0; i < boardSize; i++) {
+            Label label = new Label(String.valueOf((char) ('A' + i)));
+            label.getStyleClass().add("coordenada-label");
+            board.add(label, i + 1, 0);
+        }
+
+        // Números (1-10) en el lado izquierdo
+        for (int i = 0; i < boardSize; i++) {
+            Label label = new Label(String.valueOf(i + 1));
+            label.getStyleClass().add("coordenada-label");
+            board.add(label, 0, i + 1);
+        }
     }
 
     private void configurarMenu() {
@@ -217,7 +236,9 @@ public void initialize(URL location, ResourceBundle resources) {
     }
 
     /**
-     * Método estático para establecer el GameController antes de cargar la vista
+     * Método estático para establecer el GameController antes de cargar la
+     * vista
+     *
      * @param controller
      */
     public static void setGameController(GameController controller) {
@@ -398,22 +419,6 @@ public void initialize(URL location, ResourceBundle resources) {
         System.out.println("GameViewController: " + mensaje);
     }
 
-    private void addLabelsCoordinates(GridPane board) {
-        // Letras (A-J) en la parte superior
-        for (int i = 0; i < 10; i++) {
-            Label label = new Label(String.valueOf((char) ('A' + i)));
-            label.getStyleClass().add("coordenada-label");
-            board.add(label, i + 1, 0);
-        }
-
-        // Números (1-10) en el lado izquierdo
-        for (int i = 0; i < 10; i++) {
-            Label label = new Label(String.valueOf(i + 1));
-            label.getStyleClass().add("coordenada-label");
-            board.add(label, 0, i + 1);
-        }
-    }
-
     private void configureEvents() {
         btnPause.setOnAction(e -> pauseGame());
         btnReset.setOnAction(e -> resetGame());
@@ -427,6 +432,46 @@ public void initialize(URL location, ResourceBundle resources) {
         lblMessage.setText("¡Comienza la batalla! Tu turno.");
         System.out.println("saliendo de  startgame");//<-- sout de control
     }
+    
+    /**
+     * Crea un overlay de barco específico para el tablero
+     */
+    /**
+     * Crea un overlay de barco específico para el tablero - VERSIÓN CORREGIDA
+     */
+   private StackPane createShipOverlayForBoard(Ship ship, double cellWidth, double cellHeight) {
+    StackPane overlay = new StackPane();
+    
+    int shipSize = ship.getType().getSize();
+    boolean isVertical = ((ship.getDirection()) == Direction.VERTICAL);
+    
+    double width, height;
+    
+    // ✅ CORRECCIÓN: Dimensiones lógicas correctas
+    if (isVertical) {
+        // VERTICAL: ancho = 1 celda, alto = tamaño * celda
+        width = cellWidth;                    // 1 celda de ancho
+        height = cellHeight * shipSize;       // tamaño * altura de celda
+    } else {
+        // HORIZONTAL: ancho = tamaño * celda, alto = 1 celda  
+        width = cellWidth * shipSize;         // tamaño * ancho de celda
+        height = cellHeight;                  // 1 celda de alto
+    }
+    
+    overlay.setPrefSize(width, height);
+    overlay.setMinSize(width, height);
+    overlay.setMaxSize(width, height);
+    
+    // ✅ CORRECCIÓN: Usar dimensiones CORRECTAS para el renderizado
+    ImageView shipImage = renderShipCorrected(ship, width, height, isVertical);
+    overlay.getChildren().add(shipImage);
+    
+    System.out.println("✅ Overlay creado: " + ship.getType() + 
+                     " | Dirección: " + ship.getDirection() +
+                     " | Tamaño overlay: " + width + "x" + height);
+    
+    return overlay;
+}
 
     private void handlePlayerShot(int x, int y) {
         if (!activeGame || !gameController.isPlayerTurn() || gameController.isGameOver()) {
@@ -506,11 +551,11 @@ public void initialize(URL location, ResourceBundle resources) {
             try {
                 ShotResult result = gameController.processCPUShot();
                 Coordinate lastShot = gameController.getLastShotCPU();
-                
+
                 if (lastShot != null) {
                     updateFiredCell(playerBoardButtons[lastShot.getX()][lastShot.getY()], result);
                 }
-                
+
                 showMessage("CPU: " + result.getMessage());
 
                 // Sonidos y animaciones
@@ -573,138 +618,155 @@ public void initialize(URL location, ResourceBundle resources) {
     }
 
     private void updateBoardDisplay(Button[][] buttons, boolean isCPUBoard) {
-    Board board = isCPUBoard ? gameController.getCpuBoard() : gameController.getPlayerBoard();
-    boolean showShips = !isCPUBoard; // Mostrar barcos solo en tablero del jugador
+        Board board = isCPUBoard ? gameController.getCpuBoard() : gameController.getPlayerBoard();
+        boolean showShips = !isCPUBoard; // Mostrar barcos solo en tablero del jugador
+        int boardSize = config.getBoardSize();
 
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-            Coordinate coord = new Coordinate(i, j);
-            Cell cell = board.getCell(coord);
-            Button button = buttons[i][j];
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                Coordinate coord = new Coordinate(i, j);
+                Cell cell = board.getCell(coord);
+                Button button = buttons[i][j];
 
-            if (cell == null) continue;
-
-            // Limpiar todas las clases de estilo
-            button.getStyleClass().removeAll(
-                "casilla-agua", "casilla-barco", 
-                "casilla-impacto", "casilla-fallo", "casilla-hundido"
-            );
-
-            // Resetear texto y gráfico
-            button.setText("");
-            button.setGraphic(null);
-
-            // Obtener el estado actual de la celda
-            CellState state = cell.getState();
-
-            // Aplicar estilos según el estado
-            switch (state) {
-                case WATER:
-                    button.getStyleClass().add("casilla-agua");
-                    if (showShips && cell.hasShip()) {
-                        button.getStyleClass().add("casilla-barco");
-                        // Opcional: agregar gráfico del barco si está en la primera casilla
-                        if (cell.hasShip() && cell.getShip().getStartCoordinate().equals(coord)) {
-                            StackPane shipOverlay = ShipRenderer.createShipOverlay(cell.getShip());
-                            button.setGraphic(shipOverlay);
-                        }
-                    }
-                    break;
-
-                case SHIP:
-                    if (showShips) {
-                        button.getStyleClass().add("casilla-barco");
-                        // Gráfico del barco para la primera casilla
-                        if (cell.getShip().getStartCoordinate().equals(coord)) {
-                            StackPane shipOverlay = ShipRenderer.createShipOverlay(cell.getShip());
-                            button.setGraphic(shipOverlay);
-                        }
-                    } else {
-                        button.getStyleClass().add("casilla-agua");
-                    }
-                    break;
-
-                case IMPACT:
-                    button.getStyleClass().add("casilla-impacto");
-                    button.setText("💥");
-                    break;
-
-                case MISS:
-                    button.getStyleClass().add("casilla-fallo");
-                    button.setText("●");
-                    break;
-
-                case SUNK_SHIP:
-                    button.getStyleClass().add("casilla-hundido");
-                    button.setText("💀");
-                    // También mostrar el barco hundido completo
-                    if (cell.hasShip() && cell.getShip().getStartCoordinate().equals(coord)) {
-                        StackPane shipOverlay = ShipRenderer.createShipOverlay(cell.getShip());
-                        button.setGraphic(shipOverlay);
-                    }
-                    break;
-            }
-
-            // Configurar disponibilidad del botón
-            if (isCPUBoard) {
-                // En tablero de CPU: solo habilitado si es turno del jugador y la celda no ha sido disparada
-                boolean isEnabled = activeGame && gameController.isPlayerTurn() && !cell.hasBeenShot();
-                button.setDisable(!isEnabled);
-            } else {
-                // En tablero del jugador: siempre deshabilitado (solo para visualización)
-                button.setDisable(true);
-            }
-
-            // Tooltip informativo
-            setupCellTooltip(button, cell, showShips);
-        }
-    }
-}
-
-// Método auxiliar para tooltips
-private void setupCellTooltip(Button button, Cell cell, boolean showShips) {
-    String tooltipText = getCellTooltipText(cell, showShips);
-    if (!tooltipText.isEmpty()) {
-        Tooltip tooltip = new Tooltip(tooltipText);
-        Tooltip.install(button, tooltip);
-    }
-}
-
-private String getCellTooltipText(Cell cell, boolean showShips) {
-    StringBuilder sb = new StringBuilder();
-    
-    if (cell.hasBeenShot()) {
-        if (cell.isHit()) {
-            sb.append("Impacto - ");
-            if (cell.hasShip()) {
-                Ship ship = cell.getShip();
-                sb.append(ship.getType().getName());
-                if (ship.isSunk()) {
-                    sb.append(" (HUNDIDO)");
-                } else {
-                    sb.append(" (").append(ship.getIntactPartsCount())
-                      .append("/").append(ship.getSize()).append(" intactos)");
+                if (cell == null) {
+                    continue;
                 }
+
+                // Limpiar todas las clases de estilo
+                button.getStyleClass().removeAll(
+                        "casilla-agua", "casilla-barco",
+                        "casilla-impacto", "casilla-fallo", "casilla-hundido"
+                );
+
+                // Resetear texto y gráfico
+                button.setText("");
+                button.setGraphic(null);
+
+                // Obtener el estado actual de la celda
+                CellState state = cell.getState();
+
+                // Aplicar estilos según el estado
+                switch (state) {
+                    case WATER:
+                        button.getStyleClass().add("casilla-agua");
+                        if (showShips && cell.hasShip()) {
+                            button.getStyleClass().add("casilla-barco");
+                            // Opcional: agregar gráfico del barco si está en la primera casilla
+                            if (cell.hasShip() && isFirstSegment(cell.getShip(), coord)) {
+                                StackPane shipOverlay = createShipOverlayForBoard(cell.getShip(), button.getPrefWidth(), button.getPrefHeight());
+                                button.setGraphic(shipOverlay);
+                            }
+                        }
+                        break;
+
+                    case SHIP:
+                        if (showShips) {
+                            button.getStyleClass().add("casilla-barco");
+                            // Gráfico del barco para la primera casilla
+                            if (cell.hasShip() && isFirstSegment(cell.getShip(), coord)) {
+                                StackPane shipOverlay = createShipOverlayForBoard(cell.getShip(), button.getPrefWidth(), button.getPrefHeight());
+                                button.setGraphic(shipOverlay);
+                            }
+                        } else {
+                            button.getStyleClass().add("casilla-agua");
+                        }
+                        break;
+
+                    case IMPACT:
+                        button.getStyleClass().add("casilla-impacto");
+                        button.setText("💥");
+                        break;
+
+                    case MISS:
+                        button.getStyleClass().add("casilla-fallo");
+                        button.setText("●");
+                        break;
+
+                    case SUNK_SHIP:
+                        button.getStyleClass().add("casilla-hundido");
+                        button.setText("💀");
+                        // También mostrar el barco hundido completo
+                        if (cell.hasShip() && isFirstSegment(cell.getShip(), coord)) {
+                            StackPane shipOverlay = createShipOverlayForBoard(cell.getShip(), button.getPrefWidth(), button.getPrefHeight());
+                            button.setGraphic(shipOverlay);
+                        }
+                        break;
+                }
+
+                // Configurar disponibilidad del botón
+                if (isCPUBoard) {
+                    // En tablero de CPU: solo habilitado si es turno del jugador y la celda no ha sido disparada
+                    boolean isEnabled = activeGame && gameController.isPlayerTurn() && !cell.hasBeenShot();
+                    button.setDisable(!isEnabled);
+                } else {
+                    // En tablero del jugador: siempre deshabilitado (solo para visualización)
+                    button.setDisable(true);
+                }
+
+                // Tooltip informativo
+                setupCellTooltip(button, cell, showShips);
             }
-        } else {
-            sb.append("Disparo fallido");
-        }
-    } else {
-        if (showShips && cell.hasShip()) {
-            sb.append("Barco: ").append(cell.getShip().getType().getName());
-        } else {
-            sb.append("Agua");
         }
     }
-    
-    if (cell.getCoordinate() != null) {
-        sb.append("\nCoordenada: ").append(cell.getCoordinate().aNotacion());
+
+    /**
+     * Verifica si esta coordenada es el primer segmento del barco
+     */
+    private boolean isFirstSegment(Ship ship, Coordinate coord) {
+        if (ship == null || ship.getSegments().isEmpty()) {
+            return false;
+        }
+        return ship.getSegments().get(0).equals(coord);
     }
+
     
-    return sb.toString();
-}
+   
 
+    /**
+     * Tooltip mejorado - no revela información del enemigo
+     */
+    private void setupCellTooltip(Button button, Cell cell, boolean showShips) {
+        String tooltipText = getCellTooltipText(cell, showShips);
+        if (!tooltipText.isEmpty()) {
+            Tooltip tooltip = new Tooltip(tooltipText);
+            tooltip.setShowDelay(javafx.util.Duration.millis(500));
+            Tooltip.install(button, tooltip);
+        }
+    }
 
+    private String getCellTooltipText(Cell cell, boolean showShips) {
+        StringBuilder sb = new StringBuilder();
+
+        // Coordenada siempre visible
+        if (cell.getCoordinate() != null) {
+            sb.append("Coordenada: ").append(cell.getCoordinate().aNotacion());
+        }
+
+        // Información adicional según el estado y visibilidad
+        if (cell.hasBeenShot()) {
+            sb.append("\nEstado: ");
+            if (cell.isHit()) {
+                sb.append("Impacto");
+                if (cell.hasShip() && showShips) {
+                    Ship ship = cell.getShip();
+                    sb.append(" - ").append(ship.getType().getName());
+                    if (ship.isSunk()) {
+                        sb.append(" (HUNDIDO)");
+                    } else {
+                        sb.append(" (").append(ship.getIntactPartsCount())
+                                .append("/").append(ship.getSize()).append(" intactos)");
+                    }
+                }
+            } else {
+                sb.append("Disparo fallido");
+            }
+        } else if (showShips && cell.hasShip()) {
+            // Solo mostrar información de barcos en tablero propio
+            sb.append("\nBarco: ").append(cell.getShip().getType().getName());
+        }
+
+        return sb.toString();
+    }
 
     private void highlightCPUcell(int x, int y) {
         if (!gameController.isPlayerTurn() || !activeGame) {
@@ -718,8 +780,9 @@ private String getCellTooltipText(Cell cell, boolean showShips) {
     }
 
     private void clearCPUHighlight() {
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 10; j++) {
+        int boardSize = config.getBoardSize();
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
                 Button button = cpuBoardButtons[i][j];
                 button.getStyleClass().remove("casilla-resaltada");
             }
@@ -727,8 +790,9 @@ private String getCellTooltipText(Cell cell, boolean showShips) {
     }
 
     private void disableCPUboard(boolean disable) {
-        for (int i = 0; i < 10; i++) {
-            for (int j = 0; j < 10; j++) {
+        int boardSize = config.getBoardSize();
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
                 cpuBoardButtons[i][j].setDisable(disable || !activeGame || !gameController.isPlayerTurn());
             }
         }
@@ -752,7 +816,7 @@ private String getCellTooltipText(Cell cell, boolean showShips) {
 
         // Panel de la CPU  
         updateFleetPanel(cpuInfoPanel, gameController.getCPUShips(), "Barcos Enemigos");
-        
+
         // Actualizar progreso del juego
         updateGameProgress();
     }
@@ -792,9 +856,9 @@ private String getCellTooltipText(Cell cell, boolean showShips) {
     private void updateGameProgress() {
         if (gameProgress != null) {
             int totalShips = gameController.getPlayerShips().size() + gameController.getCPUShips().size();
-            int sunkShips = (int) (gameController.getPlayerShips().stream().filter(Ship::isSunk).count() + 
-                                 gameController.getCPUShips().stream().filter(Ship::isSunk).count());
-            
+            int sunkShips = (int) (gameController.getPlayerShips().stream().filter(Ship::isSunk).count()
+                    + gameController.getCPUShips().stream().filter(Ship::isSunk).count());
+
             double progress = totalShips > 0 ? (double) sunkShips / totalShips : 0.0;
             gameProgress.setProgress(progress);
         }
@@ -811,37 +875,13 @@ private String getCellTooltipText(Cell cell, boolean showShips) {
         Button btnSonar = new Button("Sonar (3 puntos)");
         btnSonar.setOnAction(e -> activarSonar());
         btnSonar.setDisable(!gameController.getPlayerSkills().canUseSkill(com.cenit.battleship.model.Skill.SONAR));
-        
+
         Button btnRadar = new Button("Radar (5 puntos)");
         btnRadar.setOnAction(e -> activarRadar());
         btnRadar.setDisable(!gameController.getPlayerSkills().canUseSkill(com.cenit.battleship.model.Skill.RADAR));
 
         skillsPanel.getChildren().addAll(btnSonar, btnRadar);
     }
-    
-    private void updateGameBoard() {
-    // Actualizar tablero del jugador
-    for (int i = 0; i < 10; i++) {
-        for (int j = 0; j < 10; j++) {
-            Coordinate coord = new Coordinate(i, j);
-            Button button = playerBoardButtons[i][j];
-            
-            // Verificar si hay un barco en esta coordenada
-            Ship ship = gameController.getShipAt(coord);
-            if (ship != null) {
-                button.getStyleClass().add("casilla-barco");
-                if (ship.isPartDamaged(coord)) {
-                    button.getStyleClass().add("casilla-barco-danado");
-                }
-                
-                // Agregar gráfico del barco
-                if (ship.getStartCoordinate().equals(coord)) {
-                    button.setGraphic(ShipRenderer.createShipOverlay(ship));
-                }
-            }
-        }
-    }
-}
 
     private void activarSonar() {
         showMessage("Habilidad Sonar activada! Selecciona una posición para escanear.");

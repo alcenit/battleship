@@ -9,8 +9,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.text.Font?> 
 
-
- <VBox fx:id="mainContainer" 
+<VBox fx:id="mainContainer" 
        alignment="CENTER" 
        spacing="20" 
        xmlns="http://javafx.com/javafx/11.0.1" 
@@ -25,6 +24,10 @@
    </Label>
    
    <VBox alignment="CENTER" spacing="15">
+      <!-- AGREGAR CAMPO PARA NOMBRE DEL JUGADOR -->
+      <Label text="Nombre del Jugador:" styleClass="subtitle-label"/>
+      <TextField fx:id="txtPlayerName" prefWidth="200" promptText="Ingresa tu nombre"/>
+      
       <Label text="Modo de Juego:" styleClass="subtitle-label"/>
       <ComboBox fx:id="comboModeGame" prefWidth="200"/>
       <Label text="Dificultad:" styleClass="subtitle-label"/>
@@ -41,11 +44,7 @@
   <stylesheets>
         <URL value="@/com/cenit/battleship/styles/mainview.css"/>
     </stylesheets> 
-   
-    
-</VBox>   
-    
-    
+</VBox>
     
     
     
