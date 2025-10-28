@@ -301,8 +301,8 @@ public class GameController {
      */
     private boolean areAllCoordinatesValid(List<Coordinate> coordinates) {
         for (Coordinate coord : coordinates) {
-            if (coord.getX() < 0 || coord.getX() >= Board.SIZE ||
-                coord.getY() < 0 || coord.getY() >= Board.SIZE) {
+            if (coord.getX() < 0 || coord.getX() >= Board.BOARD_SIZE ||
+                coord.getY() < 0 || coord.getY() >= Board.BOARD_SIZE) {
                 System.out.println("🚫 Coordenada fuera del tablero: " + coord.aNotacion());
                 return false;
             }
@@ -335,7 +335,7 @@ public class GameController {
                     int x = coord.getX() + dx;
                     int y = coord.getY() + dy;
 
-                    if (x >= 0 && x < Board.SIZE && y >= 0 && y < Board.SIZE) {
+                    if (x >= 0 && x < Board.BOARD_SIZE && y >= 0 && y < Board.BOARD_SIZE) {
                         Coordinate adjacent = new Coordinate(x, y);
                         if (playerBoard.hasShipAt(adjacent)) {
                             System.out.println("🚫 Barco muy cercano en: " + adjacent.aNotacion());
@@ -696,8 +696,8 @@ public class GameController {
     // ========== MÉTODOS AUXILIARES ==========
     private boolean isValidCoordinate(Coordinate coord) {
         return coord != null && 
-               coord.getX() >= 0 && coord.getX() < Board.SIZE && 
-               coord.getY() >= 0 && coord.getY() < Board.SIZE;
+               coord.getX() >= 0 && coord.getX() < Board.BOARD_SIZE && 
+               coord.getY() >= 0 && coord.getY() < Board.BOARD_SIZE;
     }
 
     /**
@@ -706,8 +706,8 @@ public class GameController {
      */
     public List<Coordinate> getPlayerHitCoordinates() {
         List<Coordinate> hits = new ArrayList<>();
-        for (int i = 0; i < Board.SIZE; i++) {
-            for (int j = 0; j < Board.SIZE; j++) {
+        for (int i = 0; i < Board.BOARD_SIZE; i++) {
+            for (int j = 0; j < Board.BOARD_SIZE; j++) {
                 Coordinate coord = new Coordinate(i, j);
                 Cell cell = cpuBoard.getCell(coord);
                 if (cell != null && cell.hasBeenShot() && cell.isHit()) {

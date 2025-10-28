@@ -83,11 +83,11 @@ public class GameStateMapper {
     
     private BoardDTO mapBoardState(Board board) {
         BoardDTO dto = new BoardDTO();
-        dto.setSize(Board.SIZE);
+        dto.setSize(Board.BOARD_SIZE);
         
-        String[][] states = new String[Board.SIZE][Board.SIZE];
-        for (int i = 0; i < Board.SIZE; i++) {
-            for (int j = 0; j < Board.SIZE; j++) {
+        String[][] states = new String[Board.BOARD_SIZE][Board.BOARD_SIZE];
+        for (int i = 0; i < Board.BOARD_SIZE; i++) {
+            for (int j = 0; j < Board.BOARD_SIZE; j++) {
                 Cell cell = board.getCell(i, j);
                 states[i][j] = cell.getState().name();
             }
@@ -143,8 +143,8 @@ public class GameStateMapper {
     }
     
     int size = dto.getSize();
-    if (size != Board.SIZE) {
-        throw new IllegalStateException("Tamaño del tablero no coincide: " + size + " vs " + Board.SIZE);
+    if (size != Board.BOARD_SIZE) {
+        throw new IllegalStateException("Tamaño del tablero no coincide: " + size + " vs " + Board.BOARD_SIZE);
     }
     
     // Primero limpiar el tablero

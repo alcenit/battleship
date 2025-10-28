@@ -216,13 +216,13 @@ public class AnimationController {
         if (isRow) {
             startX = -50;
             startY = index * 40 + 20;
-            endX = Board.SIZE * 40 + 50;
+            endX = Board.BOARD_SIZE * 40 + 50;
             endY = startY;
         } else {
             startX = index * 40 + 20;
             startY = -50;
             endX = startX;
-            endY = Board.SIZE * 40 + 50;
+            endY = Board.BOARD_SIZE * 40 + 50;
         }
         
         drone.setTranslateX(startX);
@@ -324,7 +324,7 @@ public class AnimationController {
         if (!animationsEnabled || animationLayer == null) return;
         
         // Crear efecto de interferencia en todo el tablero
-        Rectangle interference = new Rectangle(0, 0, Board.SIZE * 40, Board.SIZE * 40);
+        Rectangle interference = new Rectangle(0, 0, Board.BOARD_SIZE * 40, Board.BOARD_SIZE * 40);
         interference.setFill(Color.rgb(255, 0, 0, 0.3));
         animationLayer.getChildren().add(interference);
         

@@ -217,8 +217,8 @@ public class Game {
      */
     private boolean areAllCoordinatesValid(List<Coordinate> coordinates) {
         for (Coordinate coord : coordinates) {
-            if (coord.getX() < 0 || coord.getX() >= Board.SIZE
-                    || coord.getY() < 0 || coord.getY() >= Board.SIZE) {
+            if (coord.getX() < 0 || coord.getX() >= Board.BOARD_SIZE
+                    || coord.getY() < 0 || coord.getY() >= Board.BOARD_SIZE) {
                 System.out.println("🚫 Coordenada fuera del tablero: " + coord.aNotacion());
                 return false;
             }

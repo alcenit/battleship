@@ -9,12 +9,12 @@ import java.util.List;
  * Representa el tablero de juego de batalla naval
  */
 public class Board {
-    public static final int SIZE = 15;
+    public static final int BOARD_SIZE = 15;
     private Cell[][] grid;
     private List<Ship> ships;
     
     public Board() {
-        this.grid = new Cell[SIZE][SIZE];
+        this.grid = new Cell[BOARD_SIZE][BOARD_SIZE];
         this.ships = new ArrayList<>();
         initializeGrid();
     }
@@ -23,8 +23,8 @@ public class Board {
      * Inicializa el grid con celdas vacías
      */
     private void initializeGrid() {
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
                 grid[i][j] = new Cell();
             }
         }
@@ -46,7 +46,7 @@ public class Board {
         int y = coord.getY();
         
         // Validar coordenadas
-        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
+        if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) {
             System.err.println("❌ Coordenada fuera de los límites: " + coord);
             return null;
         }
@@ -80,7 +80,7 @@ public class Board {
         int x = coord.getX();
         int y = coord.getY();
         
-        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
+        if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) {
             throw new IllegalArgumentException("Coordenada fuera de los límites: " + coord);
         }
         
@@ -103,7 +103,7 @@ public class Board {
         int x = coord.getX();
         int y = coord.getY();
         
-        if (x < 0 || x >= SIZE || y < 0 || y >= SIZE) {
+        if (x < 0 || x >= BOARD_SIZE || y < 0 || y >= BOARD_SIZE) {
             return ShotResult.INVALID;
         }
         
@@ -189,8 +189,8 @@ public class Board {
      * @throws IllegalArgumentException si la coordenada está fuera del tablero
      */
     public Cell getCell(Coordinate coord) {
-        if (coord.getX() < 0 || coord.getX() >= SIZE || 
-            coord.getY() < 0 || coord.getY() >= SIZE) {
+        if (coord.getX() < 0 || coord.getX() >= BOARD_SIZE || 
+            coord.getY() < 0 || coord.getY() >= BOARD_SIZE) {
             throw new IllegalArgumentException("Coordenada fuera del tablero: " + coord);
         }
         return grid[coord.getX()][coord.getY()];
@@ -284,9 +284,9 @@ public class Board {
      * @return Matriz de strings representando el tablero
      */
     public String[][] getBoardDisplay(boolean showShips) {
-        String[][] display = new String[SIZE][SIZE];
-        for (int i = 0; i < SIZE; i++) {
-            for (int j = 0; j < SIZE; j++) {
+        String[][] display = new String[BOARD_SIZE][BOARD_SIZE];
+        for (int i = 0; i < BOARD_SIZE; i++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
                 display[i][j] = grid[i][j].getDisplayState(showShips);
             }
         }
@@ -303,15 +303,15 @@ public class Board {
         
         // Imprimir letras de columnas
         System.out.print("  ");
-        for (int j = 0; j < SIZE; j++) {
+        for (int j = 0; j < BOARD_SIZE; j++) {
             System.out.print(" " + (char)('A' + j) + " ");
         }
         System.out.println();
         
         // Imprimir filas con números
-        for (int i = 0; i < SIZE; i++) {
+        for (int i = 0; i < BOARD_SIZE; i++) {
             System.out.print((i + 1) + " ");
-            for (int j = 0; j < SIZE; j++) {
+            for (int j = 0; j < BOARD_SIZE; j++) {
                 System.out.print(display[i][j] + " ");
             }
             System.out.println();

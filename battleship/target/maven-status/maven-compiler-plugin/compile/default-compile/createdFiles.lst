@@ -12,6 +12,7 @@ com\cenit\battleship\view\GameViewController$3.class
 com\cenit\battleship\controller\SkillController.class
 com\cenit\battleship\services\JsonPersistenceStrategy.class
 com\cenit\battleship\model\GameState.class
+com\cenit\battleship\view\PlacementViewController$1.class
 com\cenit\battleship\model\enums\Achievement$AchievementCategory.class
 com\cenit\battleship\model\enums\Achievement.class
 com\cenit\battleship\services\StorageService$BoardState.class

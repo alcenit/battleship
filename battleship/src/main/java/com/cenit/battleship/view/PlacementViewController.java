@@ -20,11 +20,14 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import com.cenit.battleship.model.GameConfiguration;
+import java.util.Random;
 import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.geometry.Bounds;
+import javafx.geometry.Insets;
+import javafx.geometry.Pos;
 
 import javafx.scene.Node;
 import javafx.scene.Scene;
@@ -32,6 +35,8 @@ import javafx.scene.control.Alert;
 import javafx.scene.control.ComboBox;
 
 import javafx.scene.image.ImageView;
+import javafx.scene.paint.Color;
+import javafx.scene.shape.Rectangle;
 
 import javafx.stage.Stage;
 
@@ -47,6 +52,9 @@ public class PlacementViewController implements Initializable {
     private Ship selectShip;
     private Direction actualDirection = Direction.HORIZONTAL;
     private Object placementTimer;
+
+    private List<Coordinate> currentHighlight = new ArrayList<>();
+    private boolean isValidPlacement = false;
 
     @FXML
     private GridPane boardPlayer;
@@ -71,6 +79,9 @@ public class PlacementViewController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+
+        //establecer el tamaño de lasceldas
+        config.setCellSize(40);
         boardButtons = new Button[config.getBoardSize()][config.getBoardSize()];
 
         initializeShips();
@@ -79,11 +90,13 @@ public class PlacementViewController implements Initializable {
         // Configurar overlay con mejor sincronización
         setupOverlay();
 
+        // Inicializar panel de barcos
+        updateShipsPanel();
+
         // Usar Platform.runLater para asegurar que el layout esté listo
         Platform.runLater(() -> {
             addLayoutListeners();
             updateOverlayPosition();
-
             // Forzar una actualización después de que la escena esté completamente renderizada
             new Thread(() -> {
                 try {
@@ -96,10 +109,12 @@ public class PlacementViewController implements Initializable {
                     Thread.currentThread().interrupt();
                 }
             }).start();
+
         });
 
         ConfigureEvents();
         updateInterface();
+        setBattleShipBackground();
     }
 
     private void initializeShips() {
@@ -133,12 +148,20 @@ public class PlacementViewController implements Initializable {
 
     private void initializeBoard() {
         int boardSize = config.getBoardSize();
-        int cellSize = config.getCellSize();
+        int cellSize = config.getCellSize(); // Esto es 40
+
+        System.out.println("? Tamaño de casilla establecido a: " + cellSize + "px");
+
+        // ✅ SOLUCIÓN: FORZAR TAMAÑO DEL GRIDPANE
+        int totalSize = boardSize * cellSize; // 15 * 40 = 600px
+        boardPlayer.setPrefSize(totalSize, totalSize);
+        boardPlayer.setMinSize(totalSize, totalSize);
+        boardPlayer.setMaxSize(totalSize, totalSize);
 
         for (int i = 0; i < boardSize; i++) {
             for (int j = 0; j < boardSize; j++) {
                 Button button = new Button();
-                button.setPrefSize(cellSize, cellSize);
+                button.setPrefSize(cellSize, cellSize); // 40x40
                 button.getStyleClass().add("casilla-vacia");
 
                 final int x = i;
@@ -152,6 +175,8 @@ public class PlacementViewController implements Initializable {
                 boardButtons[i][j] = button;
             }
         }
+
+        System.out.println("✅ Tablero forzado a: " + totalSize + "x" + totalSize + "px");
     }
 
     private void setupOverlay() {
@@ -234,16 +259,158 @@ public class PlacementViewController implements Initializable {
     // onAction button
     private void rotateShip() {
         actualDirection = (actualDirection == Direction.HORIZONTAL) ? Direction.VERTICAL : Direction.HORIZONTAL;
-        // Actualizar el texto del botón
         btnRotate.setText(actualDirection == Direction.VERTICAL ? "Horizontal" : "Vertical");
-        System.out.println("? Dirección cambiada a: " + actualDirection);
+
+        // Recalcular highlight si hay una posición activa
+        if (!currentHighlight.isEmpty() && selectShip != null) {
+            Coordinate firstCoord = currentHighlight.get(0);
+            highlightPosition(firstCoord.getX(), firstCoord.getY());
+        }
+
+        updateInstructions();
     }
 
     // onAction button
     private void placeRandomShips() {
-        // Implementar colocación aleatoria de barcos
         System.out.println("? Colocando barcos aleatoriamente...");
+
+        try {
+            clearAllShips();
+
+            // Trabajar con copia de la lista
+            List<Ship> shipsToPlace = new ArrayList<>(shipToPlacement);
+
+            for (Ship ship : shipsToPlace) {
+                placeSingleShipRandomly(ship);
+            }
+
+            updateInterface();
+            updateShipGraphics();
+            btnBeging.setDisable(shipToPlacement.isEmpty());
+
+            System.out.println("✅ Colocación aleatoria completada");
+
+        } catch (Exception e) {
+            System.err.println("❌ Error: " + e.getMessage());
+        }
     }
+
+    /**
+     * Limpia todos los barcos colocados
+     */
+    private void clearAllShips() {
+        placedShips.clear();
+
+        // Reiniciar la lista de barcos por colocar
+        shipToPlacement.clear();
+        initializeShips();
+
+        // Limpiar gráficos
+        if (overlayLayer != null) {
+            overlayLayer.getChildren().clear();
+        }
+
+        // Limpiar el estado visual del tablero
+        clearBoardVisuals();
+    }
+
+    /**
+     * Limpia el aspecto visual del tablero
+     */
+    private void clearBoardVisuals() {
+        int boardSize = config.getBoardSize();
+        for (int i = 0; i < boardSize; i++) {
+            for (int j = 0; j < boardSize; j++) {
+                Button button = boardButtons[i][j];
+                button.getStyleClass().removeAll("casilla-barco", "casilla-bloqueada");
+                button.getStyleClass().add("casilla-vacia");
+                button.setText("");
+            }
+        }
+    }
+
+    /**
+     * Coloca un solo barco en posición aleatoria
+     */
+    private void placeSingleShipRandomly(Ship ship) {
+        Random random = new Random();
+        int maxAttempts = 100; // Límite para evitar bucle infinito
+        int attempts = 0;
+
+        while (attempts < maxAttempts) {
+            attempts++;
+
+            // Generar posición y dirección aleatorias
+            int x = random.nextInt(config.getBoardSize());
+            int y = random.nextInt(config.getBoardSize());
+            Direction direction = random.nextBoolean() ? Direction.HORIZONTAL : Direction.VERTICAL;
+
+            System.out.println("? Intentando colocar " + ship.getType().getName()
+                    + " en " + getCoordinateName(x, y) + " (" + direction + ")");
+
+            // Verificar si se puede colocar
+            if (canPlaceShip(x, y, direction, ship.getType().getSize())) {
+                // Colocar el barco
+                boolean placed = placeShip(x, y, direction, ship);
+                if (placed) {
+                    placedShips.add(ship);
+                    shipToPlacement.remove(ship);
+
+                    System.out.println("✅ " + ship.getType().getName()
+                            + " colocado aleatoriamente en " + getCoordinateName(x, y));
+                    return; // Salir del bucle si se colocó exitosamente
+                }
+            }
+        }
+
+        // Si no se pudo colocar después de muchos intentos
+        System.err.println("❌ No se pudo colocar " + ship.getType().getName()
+                + " después de " + maxAttempts + " intentos");
+    }
+
+    /**
+     * Versión mejorada de canPlaceShip con mejor logging
+     */
+    private boolean canPlaceShip(int startX, int startY, Direction direction, int size) {
+    // Calcular coordenadas
+    List<Coordinate> coordinates = calculateShipCoordinates(startX, startY, direction, size);
+    
+    // Verificar que el barco quepa en el tablero
+    if (coordinates.isEmpty()) {
+        return false;
+    }
+    
+    // Verificar límites
+    for (Coordinate coord : coordinates) {
+        if (coord.getX() < 0 || coord.getX() >= config.getBoardSize() ||
+            coord.getY() < 0 || coord.getY() >= config.getBoardSize()) {
+            return false;
+        }
+    }
+    
+    // Verificar superposición y proximidad
+    for (Ship placedShip : placedShips) {
+        for (Coordinate placedCoord : placedShip.getSegments()) {
+            // Verificar superposición
+            for (Coordinate newCoord : coordinates) {
+                if (placedCoord.equals(newCoord)) {
+                    return false;
+                }
+            }
+            
+            // Verificar adyacencia
+            for (Coordinate newCoord : coordinates) {
+                int diffX = Math.abs(placedCoord.getX() - newCoord.getX());
+                int diffY = Math.abs(placedCoord.getY() - newCoord.getY());
+                if (diffX <= 1 && diffY <= 1) {
+                    return false;
+                }
+            }
+        }
+    }
+    
+    return true;
+}
 
     private void StartGame() {
         try {
@@ -259,49 +426,6 @@ public class PlacementViewController implements Initializable {
             System.err.println("? Error al cambiar a GameView: " + ex.getMessage());
             ex.printStackTrace();
         }
-    }
-
-    private boolean canPlaceShip(int startX, int startY, Direction direction, int size) {
-        Coordinate start = new Coordinate(startX, startY);
-
-        // Calcular coordenadas potenciales
-        List<Coordinate> coordinates = calculateShipCoordinates(startX, startY, direction, size);
-
-        // Verificar límites del tablero
-        for (Coordinate coord : coordinates) {
-            if (coord.getX() < 0 || coord.getX() >= config.getBoardSize()
-                    || coord.getY() < 0 || coord.getY() >= config.getBoardSize()) {
-                System.out.println("? Error: Coordenada fuera del tablero: " + coord.aNotacion());
-                return false;
-            }
-        }
-
-        // Verificar superposición y proximidad con barcos existentes
-        for (Ship placedShip : placedShips) {
-            // Verificar superposición directa
-            for (Coordinate placedCoord : placedShip.getSegments()) {
-                for (Coordinate newCoord : coordinates) {
-                    if (placedCoord.equals(newCoord)) {
-                        System.out.println("? Superposición en: " + newCoord.aNotacion());
-                        return false;
-                    }
-                }
-            }
-
-            // Verificar adyacencia (barcos no pueden tocarse)
-            for (Coordinate placedCoord : placedShip.getSegments()) {
-                for (Coordinate newCoord : coordinates) {
-                    int diffX = Math.abs(placedCoord.getX() - newCoord.getX());
-                    int diffY = Math.abs(placedCoord.getY() - newCoord.getY());
-                    if (diffX <= 1 && diffY <= 1) {
-                        System.out.println("? Barco muy cercano en: " + newCoord.aNotacion());
-                        return false;
-                    }
-                }
-            }
-        }
-
-        return true;
     }
 
     private List<Coordinate> calculateShipCoordinates(int startX, int startY, Direction direction, int size) {
@@ -354,8 +478,10 @@ public class PlacementViewController implements Initializable {
 
     private void handleBoardClick(int x, int y) {
         if (selectShip == null) {
+            showAlert("Selecciona un barco", "Por favor, selecciona un barco del panel primero.");
             return;
         }
+
         System.out.println("|||handleBoardClick\\n");
         System.out.println("? CALCULANDO COORDENADAS - Barco: " + selectShip.getType()
                 + ", Start: " + getCoordinateName(x, y) + ", Dir: " + actualDirection + ", Size: " + selectShip.getType().getSize());
@@ -368,21 +494,26 @@ public class PlacementViewController implements Initializable {
                     placedShips.add(selectShip);
                     shipToPlacement.remove(selectShip);
 
+                    // Seleccionar automáticamente el siguiente barco
                     if (!shipToPlacement.isEmpty()) {
                         selectShip = shipToPlacement.get(0);
                     } else {
                         selectShip = null;
-                        btnBeging.setDisable(false);
                     }
+
+                    // Limpiar highlight después de colocar
+                    clearHighlight();
 
                     updateInterface();
                     updateShipGraphics();
                 }
             } else {
                 System.out.println("? No se puede colocar el barco en " + getCoordinateName(x, y));
+                showAlert("Posición inválida", "No se puede colocar el barco aquí. Intenta en otra posición.");
             }
         } catch (Exception e) {
             System.err.println("? Error al colocar barco: " + e.getMessage());
+            showAlert("Error", "Error al colocar el barco: " + e.getMessage());
         }
     }
 
@@ -393,31 +524,31 @@ public class PlacementViewController implements Initializable {
     }
 
     private void updateShipGraphics() {
+        System.out.println("=== 🔍 DEBUG DIMENSIONES --updateShipgraphics ===\n");
+        System.out.println("Config CellSize: " + config.getCellSize());
+        System.out.println("Board Bounds: " + boardPlayer.getBoundsInParent());
+        System.out.println("Board PrefSize: " + boardPlayer.getPrefWidth() + "x" + boardPlayer.getPrefHeight());
+        System.out.println("Calculated Cell: " + (boardPlayer.getBoundsInParent().getWidth() / config.getBoardSize()));
+        System.out.println("===========================");
+
         if (overlayLayer == null) {
             return;
         }
-        System.out.println("|||| updateShipsGraphics/placementViewController\n");
 
-        overlayLayer.getChildren().clear();
+        // ✅ USAR EL TAMAÑO CONFIGURADO, NO EL CALCULADO
+        int cellSize = config.getCellSize(); // 40px
+        double actualCellWidth = cellSize;
+        double actualCellHeight = cellSize;
 
-        int boardSize = config.getBoardSize();
-
-        // Obtener las dimensiones reales del board
-        Bounds boardBounds = boardPlayer.getBoundsInParent();
-        double actualCellWidth = boardBounds.getWidth() / boardSize;
-        double actualCellHeight = boardBounds.getHeight() / boardSize;
-
-        System.out.println("? ACTUALIZANDO GRÁFICOS - Barcos: " + placedShips.size());
+        System.out.println("✅ Usando cellSize configurado: " + cellSize + "px");
 
         for (Ship ship : placedShips) {
             if (!ship.getSegments().isEmpty()) {
                 Coordinate start = ship.getSegments().get(0);
 
-                // Calcular posición y tamaño basado en la orientación real
+                // Calcular posición con tamaño FIJO
                 double x = start.getY() * actualCellWidth;
-                System.out.println("x: "+x);
                 double y = start.getX() * actualCellHeight;
-                System.out.println("y: "+y);
 
                 // Determinar dimensiones del barco
                 double width, height;
@@ -432,9 +563,8 @@ public class PlacementViewController implements Initializable {
                 System.out.println("?? Dibujando: " + ship.getType() + " en " + getCoordinateName(start.getX(), start.getY()));
 
                 // USAR  MÉTODO renderShip
-                
                 ImageView shipImage = ShipRenderer.renderShip(ship, (int) width, (int) height);
-                
+
                 if (shipImage != null) {
                     shipImage.setLayoutX(x);
                     shipImage.setLayoutY(y);
@@ -450,7 +580,7 @@ public class PlacementViewController implements Initializable {
         System.out.println("|||||debugFinalPlacement");
         System.out.println("?Gráficos actualizados - Total overlays: " + overlayLayer.getChildren().size());
         debugFinalPlacement();
-        
+
         System.out.println("|||| ? debugLayoutInfo");
         debugLayoutInfo();
     }
@@ -493,7 +623,174 @@ public class PlacementViewController implements Initializable {
         System.out.println("✅ Flota validada correctamente");
         return true;
     }
-    //METODOS PAR DEBUGGEAR
+
+    //ESTILO DE BACKGROUND
+    private void setBattleShipBackground() {
+        // Fondo gradiente azul marino
+        String backgroundStyle
+                = "-fx-background-color: linear-gradient(from 0% 0% to 100% 100%, "
+                + "#0a2463 0%, #1e3c72 50%, #2a5298 100%);"
+                + "-fx-background-radius: 10;"
+                + "-fx-border-color: #1565c0;"
+                + "-fx-border-width: 2;"
+                + "-fx-border-radius: 10;";
+
+        mainContainer.setStyle(backgroundStyle);
+
+        // Opcional: también poner fondo al panel de barcos
+        if (panelShips != null) {
+            panelShips.setStyle("-fx-background-color: rgba(255,255,255,0.1);"
+                    + "-fx-background-radius: 8;"
+                    + "-fx-border-color: rgba(255,255,255,0.3);"
+                    + "-fx-border-width: 1;"
+                    + "-fx-border-radius: 8;");
+        }
+
+    }
+
+    /**
+     * Actualiza el panel de barcos mostrando los que faltan colocar
+     */
+    private void updateShipsPanel() {
+        if (panelShips == null) {
+            return;
+        }
+
+        // Limpiar el panel (mantener solo el título)
+        panelShips.getChildren().removeIf(node
+                -> !(node instanceof Label && ((Label) node).getText().equals("Tu Flota")));
+
+        System.out.println("? Actualizando panel de barcos - Faltan: " + shipToPlacement.size());
+
+        // Crear elementos para cada barco que falta colocar
+        for (Ship ship : shipToPlacement) {
+            HBox shipItem = createShipItem(ship);
+            panelShips.getChildren().add(shipItem);
+        }
+
+        // Si no hay barcos por colocar, mostrar mensaje
+        if (shipToPlacement.isEmpty()) {
+            Label allPlacedLabel = new Label("✅ Todos los barcos colocados");
+            allPlacedLabel.getStyleClass().add("success-label");
+            panelShips.getChildren().add(allPlacedLabel);
+        }
+    }
+
+    /**
+     * Crea un elemento de UI para representar un barco
+     */
+    private HBox createShipItem(Ship ship) {
+        HBox shipContainer = new HBox(10);
+        shipContainer.getStyleClass().add("ship-item");
+        shipContainer.setAlignment(Pos.CENTER_LEFT);
+        shipContainer.setPadding(new Insets(8, 12, 8, 12));
+
+        // Crear icono visual del barco (usando texto o rectángulo)
+        Pane shipIcon = createShipIcon(ship);
+
+        // Información del barco
+        VBox shipInfo = new VBox(2);
+        shipInfo.setAlignment(Pos.CENTER_LEFT);
+
+        Label nameLabel = new Label(ship.getType().getName());
+        nameLabel.getStyleClass().add("ship-name");
+
+        Label sizeLabel = new Label("Tamaño: " + ship.getType().getSize() + " casillas");
+        sizeLabel.getStyleClass().add("ship-size");
+
+        shipInfo.getChildren().addAll(nameLabel, sizeLabel);
+
+        // Botón de selección rápida (opcional)
+        Button selectButton = new Button("Seleccionar");
+        selectButton.getStyleClass().add("select-ship-button");
+        selectButton.setOnAction(e -> selectShipForPlacement(ship));
+
+        // Hacer que todo el contenedor sea clickeable
+        shipContainer.setOnMouseClicked(e -> selectShipForPlacement(ship));
+
+        shipContainer.getChildren().addAll(shipIcon, shipInfo, selectButton);
+
+        // Resaltar si es el barco actualmente seleccionado
+        if (ship.equals(selectShip)) {
+            shipContainer.getStyleClass().add("ship-item-selected");
+        }
+
+        return shipContainer;
+    }
+
+    /**
+     * Crea un icono visual representando el barco
+     */
+    private Pane createShipIcon(Ship ship) {
+        HBox iconContainer = new HBox(2);
+        iconContainer.setAlignment(Pos.CENTER);
+        iconContainer.getStyleClass().add("ship-icon");
+
+        int shipSize = ship.getType().getSize();
+
+        // Crear segmentos visuales del barco
+        for (int i = 0; i < shipSize; i++) {
+            Rectangle segment = new Rectangle(12, 20);
+            segment.getStyleClass().add("ship-segment");
+
+            // Color diferente según el tipo de barco
+            switch (ship.getType()) {
+                case CARRIER:
+                    segment.setFill(Color.RED);
+                    break;
+                case BATTLESHIP:
+                    segment.setFill(Color.BLUE);
+                    break;
+                case CRUISER:
+                    segment.setFill(Color.GREEN);
+                    break;
+                case DESTROYER:
+                    segment.setFill(Color.ORANGE);
+                    break;
+                case SUBMARINE:
+                    segment.setFill(Color.PURPLE);
+                    break;
+                default:
+                    segment.setFill(Color.GRAY);
+            }
+
+            iconContainer.getChildren().add(segment);
+        }
+
+        return iconContainer;
+    }
+
+    /**
+     * Selecciona un barco para colocación manual
+     */
+    private void selectShipForPlacement(Ship ship) {
+        if (shipToPlacement.contains(ship)) {
+            selectShip = ship;
+            System.out.println("? Barco seleccionado: " + ship.getType().getName());
+
+            // Actualizar instrucciones
+            updateInstructions();
+
+            // Actualizar panel para reflejar selección
+            updateShipsPanel();
+        }
+    }
+
+    /**
+     * Actualiza las instrucciones basado en el barco seleccionado
+     */
+    private void updateInstructions() {
+        if (selectShip != null) {
+            lblInstructions.setText("Selecciona: " + selectShip.getType().getName()
+                    + " (" + selectShip.getType().getSize() + " casillas) - "
+                    + actualDirection);
+        } else if (shipToPlacement.isEmpty()) {
+            lblInstructions.setText("✅ Todos los barcos colocados. Presiona 'Comenzar'.");
+        } else {
+            lblInstructions.setText("Selecciona un barco para colocar");
+        }
+    }
+    //METODOS PARA DEBUGGEAR
 
     private void debugFinalPlacement() {
         System.out.println("\n? VERIFICACIÓN FINAL DE POSICIONAMIENTO:");
@@ -507,7 +804,7 @@ public class PlacementViewController implements Initializable {
 
         for (Node child : overlayLayer.getChildren()) {
             if (child instanceof ImageView) {
-                System.out.println("   ? Barco"+shipToPlacement.toString()+" - Layout: (" + child.getLayoutX() + ", " + child.getLayoutY() + ")");
+                System.out.println("   ? Barco" + shipToPlacement.toString() + " - Layout: (" + child.getLayoutX() + ", " + child.getLayoutY() + ")");
                 System.out.println("        Local: " + child.getLayoutBounds());
                 System.out.println("        Parent: " + child.getParent().getLayoutBounds());
                 System.out.println("        Scene: " + child.getLocalToSceneTransform().transform(child.getLayoutBounds()));
@@ -550,25 +847,89 @@ public class PlacementViewController implements Initializable {
     }
 
     private void highlightPosition(int x, int y) {
-        // Implementar highlight de posición (opcional)
+        if (selectShip == null) {
+            return;
+        }
+
+        try {
+            // Limpiar highlight anterior
+            clearHighlight();
+
+            // Calcular las coordenadas que ocuparía el barco
+            List<Coordinate> potentialCoordinates = calculateShipCoordinates(
+                    x, y, actualDirection, selectShip.getType().getSize()
+            );
+
+            // Verificar si la posición es válida
+            isValidPlacement = canPlaceShip(x, y, actualDirection, selectShip.getType().getSize());
+
+            // Aplicar highlight a cada coordenada
+            for (Coordinate coord : potentialCoordinates) {
+                int coordX = coord.getX();
+                int coordY = coord.getY();
+
+                if (coordX >= 0 && coordX < config.getBoardSize()
+                        && coordY >= 0 && coordY < config.getBoardSize()) {
+
+                    Button button = boardButtons[coordX][coordY];
+
+                    // Remover estilos anteriores
+                    button.getStyleClass().removeAll("casilla-valida", "casilla-invalida");
+
+                    // Aplicar nuevo estilo
+                    if (isValidPlacement) {
+                        button.getStyleClass().add("casilla-valida"); // Verde
+                    } else {
+                        button.getStyleClass().add("casilla-invalida"); // Rojo
+                    }
+
+                    currentHighlight.add(coord);
+                }
+            }
+
+        } catch (Exception e) {
+            System.err.println("Error en highlight: " + e.getMessage());
+        }
     }
 
     private void clearHighlight() {
-        // Implementar limpieza de highlight (opcional)
+        for (Coordinate coord : currentHighlight) {
+            int x = coord.getX();
+            int y = coord.getY();
+
+            if (x >= 0 && x < config.getBoardSize()
+                    && y >= 0 && y < config.getBoardSize()) {
+
+                Button button = boardButtons[x][y];
+
+                // Remover estilos de highlight
+                button.getStyleClass().removeAll("casilla-valida", "casilla-invalida");
+
+                // Restaurar estilo normal
+                if (!button.getStyleClass().contains("casilla-vacia")) {
+                    button.getStyleClass().add("casilla-vacia");
+                }
+            }
+        }
+
+        currentHighlight.clear();
+        isValidPlacement = false;
     }
 
+    // Actualizar la interfaz de usuario
     private void updateInterface() {
-        // Actualizar la interfaz de usuario
         System.out.println("||||updateInterface?\\n BARCOS UNICOS - Total: " + shipToPlacement.size()
                 + " | placedShips: " + placedShips.size() + " | shipToPlacement colocados: "
                 + (shipToPlacement.size() - placedShips.size()));
 
-        if (shipToPlacement.isEmpty()) {
-            lblInstructions.setText("Todos los barcos colocados. Presiona 'Comenzar' para iniciar el juego.");
-        } else {
-            lblInstructions.setText("Coloca tu " + selectShip.getType() + " ("
-                    + selectShip.getType().getSize() + " casillas) - " + actualDirection);
-        }
+        // Actualizar panel de barcos
+        updateShipsPanel();
+
+        // Actualizar instrucciones
+        updateInstructions();
+
+        // Actualizar estado del botón comenzar
+        btnBeging.setDisable(!shipToPlacement.isEmpty());
     }
 
     private boolean prepareNextView(Stage currentStage, GameController gameController, String gameMode, String playerName) {

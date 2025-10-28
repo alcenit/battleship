@@ -33,8 +33,8 @@ public class CPU extends Player {
      */
     private void initializeAvailableShots() {
         availableShots = new java.util.ArrayList<>();
-        for (int x = 0; x < Board.SIZE; x++) {
-            for (int y = 0; y < Board.SIZE; y++) {
+        for (int x = 0; x < Board.BOARD_SIZE; x++) {
+            for (int y = 0; y < Board.BOARD_SIZE; y++) {
                 availableShots.add(new Coordinate(x, y));
             }
         }
@@ -53,8 +53,8 @@ public class CPU extends Player {
             
             while (!placed && attempts < MAX_ATTEMPTS) {
                 try {
-                    int x = random.nextInt(Board.SIZE);
-                    int y = random.nextInt(Board.SIZE);
+                    int x = random.nextInt(Board.BOARD_SIZE);
+                    int y = random.nextInt(Board.BOARD_SIZE);
                     Direction direction = random.nextBoolean() ? Direction.HORIZONTAL : Direction.VERTICAL;
                     
                     Coordinate coord = new Coordinate(x, y);
@@ -272,7 +272,7 @@ public class CPU extends Player {
      * Crea un mapa de probabilidades basado en barcos restantes
      */
     private double[][] createProbabilityMap(Player opponent) {
-        double[][] probMap = new double[Board.SIZE][Board.SIZE];
+        double[][] probMap = new double[Board.BOARD_SIZE][Board.BOARD_SIZE];
         
         // Para cada barco posible que pueda quedar
         for (Ship ship : opponent.getShips()) {
@@ -286,14 +286,14 @@ public class CPU extends Player {
     
     private void addShipProbability(double[][] probMap, int shipSize) {
         // Aumentar probabilidad en todas las posiciones donde podría caber el barco
-        for (int x = 0; x < Board.SIZE; x++) {
-            for (int y = 0; y < Board.SIZE; y++) {
+        for (int x = 0; x < Board.BOARD_SIZE; x++) {
+            for (int y = 0; y < Board.BOARD_SIZE; y++) {
                 for (Direction dir : Direction.values()) {
                     if (canFitShip(x, y, shipSize, dir)) {
                         for (int i = 0; i < shipSize; i++) {
                             int dx = (dir == Direction.HORIZONTAL) ? i : 0;
                             int dy = (dir == Direction.VERTICAL) ? i : 0;
-                            if (x + dx < Board.SIZE && y + dy < Board.SIZE) {
+                            if (x + dx < Board.BOARD_SIZE && y + dy < Board.BOARD_SIZE) {
                                 probMap[x + dx][y + dy] += 1.0;
                             }
                         }
@@ -308,7 +308,7 @@ public class CPU extends Player {
             int checkX = x + ((direction == Direction.HORIZONTAL) ? i : 0);
             int checkY = y + ((direction == Direction.VERTICAL) ? i : 0);
             
-            if (checkX >= Board.SIZE || checkY >= Board.SIZE) {
+            if (checkX >= Board.BOARD_SIZE || checkY >= Board.BOARD_SIZE) {
                 return false;
             }
             

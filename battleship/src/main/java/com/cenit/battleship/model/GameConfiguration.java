@@ -177,10 +177,10 @@ public class GameConfiguration {
     /**
      * Establece un nuevo tamaño para el tablero.
      * Debe usarse con precaución, ya que afecta a toda la lógica del juego.
-     * @param size El nuevo tamaño (ej. 10 para un tablero 10x10).
+     * @param size .
      */
     public void setBoardSize(int size) {
-        if (size > 0 && size <= 20) { // Poner un límite razonable
+        if (size > 0 && size <= 30) { // Poner un límite razonable
             this.boardSize = size;
             System.out.println("📐 Tamaño del tablero establecido a: " + size + "x" + size);
         } else {

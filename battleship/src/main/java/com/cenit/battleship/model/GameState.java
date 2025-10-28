@@ -4,7 +4,6 @@
  */
 package com.cenit.battleship.model;
 
-import com.cenit.battleship.controller.GameController;
 import com.cenit.battleship.model.enums.GamePhase;
 import java.util.Date;
 import java.util.List;
@@ -21,8 +20,7 @@ public class GameState {
     private GameState gameState;
 
     private GamePhase gamePhase;
-    
-    
+
     private BoardState playerBoard;
     private BoardState CPUBoard;
 
@@ -69,6 +67,7 @@ public class GameState {
     public void setGamePhase(GamePhase gamePhase) {
         this.gamePhase = gamePhase;
     }
+
     public GamePhase getGamePhase() {
         return gamePhase;
     }

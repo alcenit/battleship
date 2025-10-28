@@ -107,8 +107,8 @@ public class Player {
         
         // Verificar límites del tablero
         for (Coordinate coord : coordinates) {
-            if (coord.getX() < 0 || coord.getX() >= Board.SIZE || 
-                coord.getY() < 0 || coord.getY() >= Board.SIZE) {
+            if (coord.getX() < 0 || coord.getX() >= Board.BOARD_SIZE || 
+                coord.getY() < 0 || coord.getY() >= Board.BOARD_SIZE) {
                 return false;
             }
         }
@@ -159,8 +159,8 @@ public ShotResult shootAt(Player opponent, Coordinate target) {
     }
     
     // Verificar coordenada válida
-    if (target.getX() < 0 || target.getX() >= Board.SIZE || 
-        target.getY() < 0 || target.getY() >= Board.SIZE) {
+    if (target.getX() < 0 || target.getX() >= Board.BOARD_SIZE || 
+        target.getY() < 0 || target.getY() >= Board.BOARD_SIZE) {
         return ShotResult.INVALID;
     }
     

@@ -47,7 +47,7 @@ public class SkillController {
                     int x = center.getX() + dx;
                     int y = center.getY() + dy;
 
-                    if (x >= 0 && x < Board.SIZE && y >= 0 && y < Board.SIZE) {
+                    if (x >= 0 && x < Board.BOARD_SIZE && y >= 0 && y < Board.BOARD_SIZE) {
                         Coordinate coord = new Coordinate(x, y);
                         Cell cell = cpuBoard.getCell(coord);
                         
@@ -163,7 +163,7 @@ public class SkillController {
 
             if (isRow) {
                 // Escanear fila completa
-                for (int x = 0; x < Board.SIZE; x++) {
+                for (int x = 0; x < Board.BOARD_SIZE; x++) {
                     Coordinate coord = new Coordinate(x, index);
                     Cell cell = cpuBoard.getCell(coord);
                     if (cell != null) {
@@ -176,7 +176,7 @@ public class SkillController {
                 }
             } else {
                 // Escanear columna completa
-                for (int y = 0; y < Board.SIZE; y++) {
+                for (int y = 0; y < Board.BOARD_SIZE; y++) {
                     Coordinate coord = new Coordinate(index, y);
                     Cell cell = cpuBoard.getCell(coord);
                     if (cell != null) {
@@ -563,8 +563,8 @@ public class SkillController {
         // Buscar área con mayor densidad de barcos del jugador
         // Por ahora, posición aleatoria evitando bordes
         return new Coordinate(
-            random.nextInt(Board.SIZE - 2) + 1,
-            random.nextInt(Board.SIZE - 2) + 1
+            random.nextInt(Board.BOARD_SIZE - 2) + 1,
+            random.nextInt(Board.BOARD_SIZE - 2) + 1
         );
     }
 
@@ -578,8 +578,8 @@ public class SkillController {
         
         // Posición aleatoria como fallback
         return new Coordinate(
-            random.nextInt(Board.SIZE),
-            random.nextInt(Board.SIZE)
+            random.nextInt(Board.BOARD_SIZE),
+            random.nextInt(Board.BOARD_SIZE)
         );
     }
     
@@ -587,12 +587,12 @@ public class SkillController {
     
     private boolean isValidCoordinate(Coordinate coord) {
         return coord != null && 
-               coord.getX() >= 0 && coord.getX() < Board.SIZE && 
-               coord.getY() >= 0 && coord.getY() < Board.SIZE;
+               coord.getX() >= 0 && coord.getX() < Board.BOARD_SIZE && 
+               coord.getY() >= 0 && coord.getY() < Board.BOARD_SIZE;
     }
     
     private boolean isValidCoordinate(int x, int y) {
-        return x >= 0 && x < Board.SIZE && y >= 0 && y < Board.SIZE;
+        return x >= 0 && x < Board.BOARD_SIZE && y >= 0 && y < Board.BOARD_SIZE;
     }
     
     private String getShotResultMessage(ShotResult result) {

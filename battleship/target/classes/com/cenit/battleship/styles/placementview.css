@@ -234,7 +234,17 @@
 /* ======================================================== */
 /*  5. ESTILOS PARA ETIQUETAS DE INFORMACIÓN              */
 /* ======================================================== */
+.instruction-label{
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 6px;
+    -fx-border-radius: 6px;
 
+
+
+
+
+}
 .info-label {
     -fx-font-size: 13px;
     -fx-text-fill: #374151;
@@ -258,7 +268,7 @@
 /*  6. ESTILOS PARA BOTONES                                */
 /* ======================================================== */
 
-.btn-primary {
+.btn-rotate{
     -fx-background-color: #3b82f6;
     -fx-text-fill: white;
     -fx-font-weight: bold;
@@ -267,15 +277,15 @@
     -fx-cursor: hand;
 }
 
-.btn-primary:hover {
+.btn-rotate:hover {
     -fx-background-color: #2563eb;
 }
 
-.btn-primary:pressed {
+.btn-rotate:pressed {
     -fx-background-color: #1d4ed8;
 }
 
-.btn-secondary {
+.btn-aleatory {
     -fx-background-color: #6b7280;
     -fx-text-fill: white;
     -fx-font-weight: bold;
@@ -284,12 +294,12 @@
     -fx-cursor: hand;
 }
 
-.btn-secondary:hover {
+.btn-aleatory:hover {
     -fx-background-color: #4b5563;
 }
 
-.btn-danger {
-    -fx-background-color: #ef4444;
+.btn-beging {
+    -fx-background-color: #6b7280;
     -fx-text-fill: white;
     -fx-font-weight: bold;
     -fx-background-radius: 6px;
@@ -297,7 +307,7 @@
     -fx-cursor: hand;
 }
 
-.btn-danger:hover {
+.btn-beging:hover {
     -fx-background-color: #dc2626;
 }
 
@@ -345,36 +355,127 @@
     -fx-effect: dropshadow(gaussian, rgba(124, 58, 237, 0.3), 8, 0.5, 0, 1);
 }
 
+/* Estilos para el panel de barcos */
+.ship-item {
+    -fx-background-color: rgba(255, 255, 255, 0.1);
+    -fx-background-radius: 8;
+    -fx-border-color: rgba(255, 255, 255, 0.3);
+    -fx-border-width: 1;
+    -fx-border-radius: 8;
+    -fx-padding: 10;
+    -fx-cursor: hand;
+}
+
+.ship-item:hover {
+    -fx-background-color: rgba(255, 255, 255, 0.2);
+    -fx-border-color: rgba(255, 255, 255, 0.5);
+}
+
+.ship-item-selected {
+    -fx-background-color: rgba(33, 150, 243, 0.3);
+    -fx-border-color: #2196F3;
+    -fx-border-width: 2;
+}
+
+.ship-name {
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+}
+
+.ship-size {
+    -fx-font-size: 11px;
+    -fx-text-fill: #cccccc;
+}
+
+.ship-icon {
+    -fx-padding: 5;
+}
+
+.ship-segment {
+    -fx-arc-width: 3;
+    -fx-arc-height: 3;
+    -fx-stroke: rgba(0, 0, 0, 0.3);
+    -fx-stroke-width: 1;
+}
+
+.select-ship-button {
+    -fx-background-color: #4CAF50;
+    -fx-text-fill: white;
+    -fx-font-size: 11px;
+    -fx-padding: 5 ;
+    -fx-background-radius: 4;
+}
+
+.select-ship-button:hover {
+    -fx-background-color: #45a049;
+}
+
+.success-label {
+    -fx-text-fill: #4CAF50;
+    -fx-font-weight: bold;
+    -fx-font-size: 14px;
+    -fx-padding: 10 ;
+}
+
+.title-label {
+    -fx-font-size: 18px;
+    -fx-font-weight: bold;
+    -fx-text-fill: white;
+    -fx-padding: 0 0 10 0;
+}
+
+
 /* ======================================================== */
-/*  9. ESTILOS PARA BARRAS DE PROGRESO                    */
+/*  10. ESTILOS higthligth            */
 /* ======================================================== */
-
-.progress-bar {
-    -fx-accent: #10b981;
+/* Estilo para casilla normal */
+.casilla-vacia {
+    -fx-background-color: 
+        linear-gradient(from 0% 0% to 100% 100%, 
+        #87CEEB 0%, #4682B4 100%);
+    -fx-border-color: #2F4F4F;
+    -fx-border-width: 1;
+    -fx-text-fill: transparent;
 }
 
-.progress-bar .bar {
-    -fx-background-radius: 3px;
-    -fx-padding: 0.5px;
+/* Estilo para highlight válido (VERDE) */
+.casilla-valida {
+    -fx-background-color: 
+        linear-gradient(from 0% 0% to 100% 100%, 
+        #90EE90 0%, #32CD32 100%);
+    -fx-border-color: #006400;
+    -fx-border-width: 2;
+    -fx-text-fill: transparent;
 }
 
-.progress-bar .track {
-    -fx-background-color: #e5e7eb;
-    -fx-background-radius: 3px;
+/* Estilo para highlight inválido (ROJO) */
+.casilla-invalida {
+    -fx-background-color: 
+        linear-gradient(from 0% 0% to 100% 100%, 
+        #FFB6C1 0%, #FF6347 100%);
+    -fx-border-color: #8B0000;
+    -fx-border-width: 2;
+    -fx-text-fill: transparent;
 }
 
-.barco-hundido .bar {
-    -fx-accent: #dc2626;
+/* Efecto hover adicional */
+.casilla-valida:hover {
+    -fx-background-color: 
+        linear-gradient(from 0% 0% to 100% 100%, 
+        #98FB98 0%, #00FF00 100%);
 }
 
-.barco-danado .bar {
-    -fx-accent: #f59e0b;
+.casilla-invalida:hover {
+    -fx-background-color: 
+        linear-gradient(from 0% 0% to 100% 100%, 
+        #FFC0CB 0%, #FF0000 100%);
 }
+
 
 /* ======================================================== */
 /*  10. ESTILOS PARA ETIQUETAS DE COORDENADAS             */
 /* ======================================================== */
-
 .coordenada-label {
     -fx-font-weight: bold;
     -fx-text-fill: #4b5563;
