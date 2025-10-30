@@ -103,6 +103,59 @@ public class GameController {
     }
 
     // ========== INICIALIZACIÓN ==========
+    // ========== MÉTODOS DE INICIALIZACIÓN FALTANTES ==========
+    /**
+     * Inicializa el juego - Método que falta en tu código actual
+     */
+    public void initializeGame() {
+        try {
+            System.out.println("🎮 Inicializando juego...");
+
+            // Validar componentes críticos
+            if (playerBoard == null) {
+                throw new IllegalStateException("PlayerBoard no puede ser null");
+            }
+            if (cpuBoard == null) {
+                throw new IllegalStateException("CpuBoard no puede ser null");
+            }
+
+            // Inicializar barcos si están vacíos
+            if (playerShips.isEmpty()) {
+                System.out.println("⚠️  PlayerShips vacío, configurando flota estándar");
+                setStandardFleet();
+            }
+
+            if (CPUShips.isEmpty()) {
+                System.out.println("⚠️  CpuShips vacío, configurando flota estándar");
+                // La CPU ya debería tener barcos por el constructor, pero por si acaso
+                if (cpuPlayer instanceof CPU) {
+                    ((CPU) cpuPlayer).placeShipsRandomly();
+                    this.CPUShips = cpuPlayer.getShips();
+                }
+            }
+
+            // Configurar estado inicial del juego
+            playerTurn = true;
+            gamePhase = GamePhase.IN_PLAY;
+            elapsedTurns = 0;
+            jammingActive = false;
+
+            // Reiniciar habilidades
+            setupSkillsByDifficulty();
+
+            System.out.println("✅ Juego inicializado:");
+            System.out.println("   - Jugador: " + playerShips.size() + " barcos");
+            System.out.println("   - CPU: " + CPUShips.size() + " barcos");
+            System.out.println("   - Turno: " + (playerTurn ? "Jugador" : "CPU"));
+            System.out.println("   - Dificultad: " + difficulty);
+
+        } catch (Exception e) {
+            System.err.println("❌ ERROR en initializeGame(): " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error fatal al inicializar el juego", e);
+        }
+    }
+
     private void initializeShips() {
         // Inicializar barcos del jugador (si no se configuran manualmente)
         if (playerShips.isEmpty()) {
@@ -117,6 +170,36 @@ public class GameController {
         // Configurar habilidades iniciales según dificultad
         setupSkillsByDifficulty();
     }
+
+    /**
+     * Establece los barcos de la CPU - Método que falta
+     */
+    public void setCpuShips(List<Ship> cpuShips) {
+        this.CPUShips = new ArrayList<>(cpuShips);
+    }
+
+    /**
+     * Establece el tablero del jugador - Método que falta
+     */
+    public void setPlayerBoard(Board board) {
+        this.playerBoard = board;
+    }
+
+    /**
+     * Establece el tablero de la CPU - Método que falta
+     */
+    public void setCpuBoard(Board board) {
+        this.cpuBoard = board;
+    }
+
+    /**
+     * Establece los barcos del jugador - Método que falta
+     */
+    public void setPlayerShips(List<Ship> playerShips) {
+        this.playerShips = new ArrayList<>(playerShips);
+    }
+    
+    
 
     private void setupSkillsByDifficulty() {
         playerSkills.reset();
@@ -193,10 +276,11 @@ public class GameController {
     // ========== MÉTODOS DE COLOCACIÓN DE BARCOS ==========
     /**
      * Verifica si un barco puede colocarse en la posición especificada
+     *
      * @param ship
      * @param coord
      * @param direction
-     * @return 
+     * @return
      */
     public boolean canPlaceShip(Ship ship, Coordinate coord, Direction direction) {
         if (ship == null || coord == null || direction == null) {
@@ -229,49 +313,50 @@ public class GameController {
 
     /**
      * Coloca un barco en el tablero usando el nuevo sistema de coordenadas
+     *
      * @param ship
      * @param startCoord
      * @param direction
-     * @return 
+     * @return
      */
     public boolean placeShip(Ship ship, Coordinate startCoord, Direction direction) {
-    if (!canPlaceShip(ship, startCoord, direction)) {
-        return false;
-    }
+        if (!canPlaceShip(ship, startCoord, direction)) {
+            return false;
+        }
 
-    try {
-        List<Coordinate> shipCoordinates = calculateShipCoordinates(ship, startCoord, direction);
+        try {
+            List<Coordinate> shipCoordinates = calculateShipCoordinates(ship, startCoord, direction);
 
-        // DEBUG: Verificar dirección antes de establecer
-        System.out.println("🔧 DEBUG placeShip - Start: " + startCoord.aNotacion() + 
-                         ", Input Dir: " + direction + 
-                         ", Coords: " + shipCoordinates);
-        
-        // Establecer la posición en el objeto Ship - USANDO LA DIRECCIÓN EXPLÍCITA
-        ship.setPosition(shipCoordinates, direction); // ← PASA LA DIRECCIÓN EXPLÍCITAMENTE
+            // DEBUG: Verificar dirección antes de establecer
+            System.out.println("🔧 DEBUG placeShip - Start: " + startCoord.aNotacion()
+                    + ", Input Dir: " + direction
+                    + ", Coords: " + shipCoordinates);
 
-        // También agregar a las celdas del tablero
-        for (Coordinate coord : shipCoordinates) {
-            Cell cell = playerBoard.getCell(coord);
-            if (cell != null) {
-                cell.setShip(ship);
+            // Establecer la posición en el objeto Ship - USANDO LA DIRECCIÓN EXPLÍCITA
+            ship.setPosition(shipCoordinates, direction); // ← PASA LA DIRECCIÓN EXPLÍCITAMENTE
+
+            // También agregar a las celdas del tablero
+            for (Coordinate coord : shipCoordinates) {
+                Cell cell = playerBoard.getCell(coord);
+                if (cell != null) {
+                    cell.setShip(ship);
+                }
             }
+
+            // Agregar a la lista de barcos del jugador si no está ya
+            if (!playerShips.contains(ship)) {
+                playerShips.add(ship);
+            }
+
+            System.out.println("✅ " + ship.getType().getName() + " colocado exitosamente en "
+                    + startCoord.aNotacion() + " (" + direction + ")");
+            return true;
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al colocar barco: " + e.getMessage());
+            return false;
         }
-
-        // Agregar a la lista de barcos del jugador si no está ya
-        if (!playerShips.contains(ship)) {
-            playerShips.add(ship);
-        }
-
-        System.out.println("✅ " + ship.getType().getName() + " colocado exitosamente en " + 
-                         startCoord.aNotacion() + " (" + direction + ")");
-        return true;
-
-    } catch (Exception e) {
-        System.err.println("❌ Error al colocar barco: " + e.getMessage());
-        return false;
     }
-}
 
     /**
      * Calcula todas las coordenadas que ocuparía el barco
@@ -301,8 +386,8 @@ public class GameController {
      */
     private boolean areAllCoordinatesValid(List<Coordinate> coordinates) {
         for (Coordinate coord : coordinates) {
-            if (coord.getX() < 0 || coord.getX() >= Board.BOARD_SIZE ||
-                coord.getY() < 0 || coord.getY() >= Board.BOARD_SIZE) {
+            if (coord.getX() < 0 || coord.getX() >= Board.BOARD_SIZE
+                    || coord.getY() < 0 || coord.getY() >= Board.BOARD_SIZE) {
                 System.out.println("🚫 Coordenada fuera del tablero: " + coord.aNotacion());
                 return false;
             }
@@ -330,7 +415,9 @@ public class GameController {
         for (Coordinate coord : coordinates) {
             for (int dx = -1; dx <= 1; dx++) {
                 for (int dy = -1; dy <= 1; dy++) {
-                    if (dx == 0 && dy == 0) continue;
+                    if (dx == 0 && dy == 0) {
+                        continue;
+                    }
 
                     int x = coord.getX() + dx;
                     int y = coord.getY() + dy;
@@ -350,7 +437,8 @@ public class GameController {
 
     // ========== MÉTODOS DE BARCOS ==========
     /**
-     * Obtiene el barco en una coordenada específica del tablero del jugador humano
+     * Obtiene el barco en una coordenada específica del tablero del jugador
+     * humano
      */
     public Ship getShipAt(Coordinate coord) {
         if (playerBoard == null) {
@@ -377,14 +465,6 @@ public class GameController {
     public List<Ship> getHumanShips() {
         return humanPlayer != null ? humanPlayer.getShips() : new ArrayList<>();
     }
-
-    /**
-     * Obtiene todos los barcos de la CPU
-     */
-    public List<Ship> getCPUShips() {
-        return cpuPlayer != null ? cpuPlayer.getShips() : new ArrayList<>();
-    }
-    
 
     /**
      * Verifica si hay un barco en la coordenada del jugador humano
@@ -421,8 +501,9 @@ public class GameController {
     // ========== MÉTODOS DE DISPARO ==========
     /**
      * Procesa un disparo del jugador humano
+     *
      * @param target
-     * @return 
+     * @return
      */
     public ShotResult processPlayerShot(Coordinate target) {
         if (!playerTurn || gamePhase != GamePhase.IN_PLAY) {
@@ -469,7 +550,8 @@ public class GameController {
 
     /**
      * Procesa un disparo de la CPU
-     * @return 
+     *
+     * @return
      */
     public ShotResult processCPUShot() {
         if (playerTurn || gamePhase != GamePhase.IN_PLAY || jammingActive) {
@@ -633,6 +715,7 @@ public class GameController {
 
     /**
      * Establece la misma flota para ambos jugadores
+     *
      * @param fleet
      */
     public void setBothFleets(List<Ship> fleet) {
@@ -691,18 +774,17 @@ public class GameController {
         }
     }
 
-    
-
     // ========== MÉTODOS AUXILIARES ==========
     private boolean isValidCoordinate(Coordinate coord) {
-        return coord != null && 
-               coord.getX() >= 0 && coord.getX() < Board.BOARD_SIZE && 
-               coord.getY() >= 0 && coord.getY() < Board.BOARD_SIZE;
+        return coord != null
+                && coord.getX() >= 0 && coord.getX() < Board.BOARD_SIZE
+                && coord.getY() >= 0 && coord.getY() < Board.BOARD_SIZE;
     }
 
     /**
      * Obtiene las coordenadas donde el jugador ha impactado
-     * @return 
+     *
+     * @return
      */
     public List<Coordinate> getPlayerHitCoordinates() {
         List<Coordinate> hits = new ArrayList<>();
@@ -720,7 +802,8 @@ public class GameController {
 
     /**
      * Obtiene la racha de aciertos del jugador
-     * @return 
+     *
+     * @return
      */
     public int getPlayerHitStreak() {
         // Implementación simple - contar aciertos consecutivos en los últimos turnos
@@ -785,7 +868,6 @@ public class GameController {
     public List<Ship> getCPUShipsNotSunk() {
         return CPUShips.stream().filter(ship -> !ship.isSunk()).collect(Collectors.toList());
     }
-     
 
     public Board getPlayerBoard() {
         return playerBoard;
@@ -819,7 +901,21 @@ public class GameController {
         return new ArrayList<>(playerShips);
     }
 
-   
+    /**
+     * Obtiene todos los barcos de la CPU
+     */
+    public List<Ship> getCpuShips() {
+        if (CPUShips != null) {
+            return new ArrayList<>(CPUShips);
+        }
+
+        // Fallback: obtener del cpuPlayer si está disponible
+        if (cpuPlayer != null && cpuPlayer.getShips() != null) {
+            return new ArrayList<>(cpuPlayer.getShips());
+        }
+
+        return new ArrayList<>();
+    }
 
     public CPUController getCpuController() {
         return cpuController;
@@ -891,28 +987,32 @@ public class GameController {
 
     /**
      * Verifica si una coordenada ha sido disparada en el tablero del jugador
+     *
      * @param coord
-     * @return 
+     * @return
      */
     public boolean hasBeenShotAt(Coordinate coord) {
-        if (playerBoard == null) return false;
+        if (playerBoard == null) {
+            return false;
+        }
         Cell cell = playerBoard.getCell(coord);
         return cell != null && cell.hasBeenShot();
     }
 
     /**
      * Verifica si se puede disparar en una coordenada del tablero de la CPU
+     *
      * @param coord
-     * @return 
+     * @return
      */
     public boolean canShootAtCPU(Coordinate coord) {
-        if (cpuBoard == null) return false;
+        if (cpuBoard == null) {
+            return false;
+        }
         Cell cell = cpuBoard.getCell(coord);
         return cell != null && !cell.hasBeenShot();
     }
     // ========== MÉTODOS DE CONFIGURACIÓN DE FLOTAS PREDEFINIDAS ==========
-    
-   
 
     /**
      * Configura flota especial con barcos únicos y habilidades mejoradas
@@ -964,244 +1064,246 @@ public class GameController {
         setupSkillsForSwarmGame();
         System.out.println("🐝 Flota enjambre configurada - Muchos barcos pequeños");
     }
+
     /**
- * Establece flotas asimétricas (diferentes para jugador y CPU)
- */
-public void setAsymmetricFleets(List<Ship> playerFleet, List<Ship> cpuFleet) {
-    if (playerFleet == null || cpuFleet == null) {
-        throw new IllegalArgumentException("Las flotas no pueden ser nulas");
-    }
-
-    if (playerFleet.isEmpty() || cpuFleet.isEmpty()) {
-        throw new IllegalArgumentException("Las flotas no pueden estar vacías");
-    }
-
-    try {
-        // Validar ambas flotas
-        validateFleet(playerFleet, "Jugador");
-        validateFleet(cpuFleet, "CPU");
-
-        // Crear copias independientes
-        List<Ship> playerFleetCopy = createFleetCopy(playerFleet);
-        List<Ship> cpuFleetCopy = createFleetCopy(cpuFleet);
-
-        // Limpiar flotas existentes
-        this.playerShips.clear();
-        this.CPUShips.clear();
-
-        // Asignar nuevas flotas
-        this.playerShips.addAll(playerFleetCopy);
-        this.CPUShips.addAll(cpuFleetCopy);
-
-        // Reiniciar el estado de los barcos
-        resetShipsState(this.playerShips);
-        resetShipsState(this.CPUShips);
-
-        // Colocar barcos de la CPU automáticamente
-        if (cpuPlayer instanceof CPU) {
-            ((CPU) cpuPlayer).placeShipsRandomly();
+     * Establece flotas asimétricas (diferentes para jugador y CPU)
+     *
+     * @param playerFleet
+     * @param cpuFleet
+     */
+    public void setAsymmetricFleets(List<Ship> playerFleet, List<Ship> cpuFleet) {
+        if (playerFleet == null || cpuFleet == null) {
+            throw new IllegalArgumentException("Las flotas no pueden ser nulas");
         }
 
-        // Registrar la configuración asimétrica
-        logAsymmetricFleetAssignment(playerFleet, cpuFleet);
-
-        // Analizar el balance de las flotas asimétricas
-        analyzeAsymmetricBalance();
-
-        System.out.println("⚖️ Flotas asimétricas configuradas: Jugador=" + playerFleet.size()
-                + " barcos, CPU=" + cpuFleet.size() + " barcos");
-
-    } catch (Exception e) {
-        System.err.println("❌ Error al establecer flotas asimétricas: " + e.getMessage());
-        throw new RuntimeException("No se pudo configurar las flotas asimétricas", e);
-    }
-}
-
-/**
- * Valida que una flota sea válida
- */
-private void validateFleet(List<Ship> fleet, String owner) {
-    if (fleet == null) {
-        throw new IllegalArgumentException(owner + ": La flota no puede ser nula");
-    }
-
-    if (fleet.isEmpty()) {
-        throw new IllegalArgumentException(owner + ": La flota no puede estar vacía");
-    }
-
-    Set<ShipType> seenTypes = new HashSet<>();
-    int totalCells = 0;
-    int maxAllowedCells = getMaxFleetCells();
-
-    for (Ship ship : fleet) {
-        if (ship == null) {
-            throw new IllegalArgumentException(owner + ": La flota contiene un barco nulo");
+        if (playerFleet.isEmpty() || cpuFleet.isEmpty()) {
+            throw new IllegalArgumentException("Las flotas no pueden estar vacías");
         }
 
-        ShipType type = ship.getType();
+        try {
+            // Validar ambas flotas
+            validateFleet(playerFleet, "Jugador");
+            validateFleet(cpuFleet, "CPU");
 
-        // Verificar tipo duplicado (opcional, dependiendo de las reglas)
-        if (seenTypes.contains(type)) {
-            System.out.println("⚠️  " + owner + ": Múltiples barcos de tipo " + type.getName());
+            // Crear copias independientes
+            List<Ship> playerFleetCopy = createFleetCopy(playerFleet);
+            List<Ship> cpuFleetCopy = createFleetCopy(cpuFleet);
+
+            // Limpiar flotas existentes
+            this.playerShips.clear();
+            this.CPUShips.clear();
+
+            // Asignar nuevas flotas
+            this.playerShips.addAll(playerFleetCopy);
+            this.CPUShips.addAll(cpuFleetCopy);
+
+            // Reiniciar el estado de los barcos
+            resetShipsState(this.playerShips);
+            resetShipsState(this.CPUShips);
+
+            // Colocar barcos de la CPU automáticamente
+            if (cpuPlayer instanceof CPU) {
+                ((CPU) cpuPlayer).placeShipsRandomly();
+            }
+
+            // Registrar la configuración asimétrica
+            logAsymmetricFleetAssignment(playerFleet, cpuFleet);
+
+            // Analizar el balance de las flotas asimétricas
+            analyzeAsymmetricBalance();
+
+            System.out.println("⚖️ Flotas asimétricas configuradas: Jugador=" + playerFleet.size()
+                    + " barcos, CPU=" + cpuFleet.size() + " barcos");
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al establecer flotas asimétricas: " + e.getMessage());
+            throw new RuntimeException("No se pudo configurar las flotas asimétricas", e);
         }
-        seenTypes.add(type);
+    }
 
-        // Verificar que el barco no esté ya en otro tablero
-        if (ship.isPlaced()) {
-            System.out.println("🔄 " + owner + ": Reiniciando barco " + type.getName() + " que ya estaba colocado");
-            ship.reset();
+    /**
+     * Valida que una flota sea válida
+     */
+    private void validateFleet(List<Ship> fleet, String owner) {
+        if (fleet == null) {
+            throw new IllegalArgumentException(owner + ": La flota no puede ser nula");
         }
 
-        // Calcular tamaño total
-        totalCells += type.getSize();
+        if (fleet.isEmpty()) {
+            throw new IllegalArgumentException(owner + ": La flota no puede estar vacía");
+        }
+
+        Set<ShipType> seenTypes = new HashSet<>();
+        int totalCells = 0;
+        int maxAllowedCells = getMaxFleetCells();
+
+        for (Ship ship : fleet) {
+            if (ship == null) {
+                throw new IllegalArgumentException(owner + ": La flota contiene un barco nulo");
+            }
+
+            ShipType type = ship.getType();
+
+            // Verificar tipo duplicado (opcional, dependiendo de las reglas)
+            if (seenTypes.contains(type)) {
+                System.out.println("⚠️  " + owner + ": Múltiples barcos de tipo " + type.getName());
+            }
+            seenTypes.add(type);
+
+            // Verificar que el barco no esté ya en otro tablero
+            if (ship.isPlaced()) {
+                System.out.println("🔄 " + owner + ": Reiniciando barco " + type.getName() + " que ya estaba colocado");
+                ship.reset();
+            }
+
+            // Calcular tamaño total
+            totalCells += type.getSize();
+        }
+
+        // Validar tamaño total de la flota
+        if (totalCells > maxAllowedCells) {
+            System.out.println("📏 " + owner + ": Flota muy grande (" + totalCells
+                    + " casillas), máximo recomendado: " + maxAllowedCells);
+        }
+
+        if (totalCells < getMinFleetCells()) {
+            System.out.println("📏 " + owner + ": Flota muy pequeña (" + totalCells
+                    + " casillas), mínimo recomendado: " + getMinFleetCells());
+        }
     }
 
-    // Validar tamaño total de la flota
-    if (totalCells > maxAllowedCells) {
-        System.out.println("📏 " + owner + ": Flota muy grande (" + totalCells
-                + " casillas), máximo recomendado: " + maxAllowedCells);
+    /**
+     * Registra la asignación de flotas asimétricas
+     */
+    private void logAsymmetricFleetAssignment(List<Ship> playerFleet, List<Ship> cpuFleet) {
+        // Información de la flota del jugador
+        Map<ShipType, Integer> playerComposition = new HashMap<>();
+        int playerTotalCells = 0;
+
+        for (Ship ship : playerFleet) {
+            ShipType type = ship.getType();
+            playerComposition.merge(type, 1, Integer::sum);
+            playerTotalCells += type.getSize();
+        }
+
+        // Información de la flota de la CPU
+        Map<ShipType, Integer> cpuComposition = new HashMap<>();
+        int cpuTotalCells = 0;
+
+        for (Ship ship : cpuFleet) {
+            ShipType type = ship.getType();
+            cpuComposition.merge(type, 1, Integer::sum);
+            cpuTotalCells += type.getSize();
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("📊 CONFIGURACIÓN ASIMÉTRICA:\n");
+
+        // Flota del jugador
+        sb.append("👤 JUGADOR - ").append(playerFleet.size()).append(" barcos, ").append(playerTotalCells).append(" casillas: ");
+        for (Map.Entry<ShipType, Integer> entry : playerComposition.entrySet()) {
+            sb.append(entry.getValue()).append("x ").append(entry.getKey().getName()).append(", ");
+        }
+        if (sb.length() > 2) {
+            sb.setLength(sb.length() - 2);
+        }
+
+        sb.append("\n");
+
+        // Flota de la CPU
+        sb.append("🤖 CPU - ").append(cpuFleet.size()).append(" barcos, ").append(cpuTotalCells).append(" casillas: ");
+        for (Map.Entry<ShipType, Integer> entry : cpuComposition.entrySet()) {
+            sb.append(entry.getValue()).append("x ").append(entry.getKey().getName()).append(", ");
+        }
+        if (sb.length() > 2) {
+            sb.setLength(sb.length() - 2);
+        }
+
+        System.out.println(sb.toString());
     }
 
-    if (totalCells < getMinFleetCells()) {
-        System.out.println("📏 " + owner + ": Flota muy pequeña (" + totalCells
-                + " casillas), mínimo recomendado: " + getMinFleetCells());
-    }
-}
+    /**
+     * Analiza el balance de las flotas asimétricas
+     */
+    private void analyzeAsymmetricBalance() {
+        int playerPower = calculateFleetPower(playerShips);
+        int cpuPower = calculateFleetPower(CPUShips);
+        int playerCells = playerShips.stream().mapToInt(ship -> ship.getType().getSize()).sum();
+        int cpuCells = CPUShips.stream().mapToInt(ship -> ship.getType().getSize()).sum();
 
+        double powerRatio = (double) Math.min(playerPower, cpuPower) / Math.max(playerPower, cpuPower);
+        double cellRatio = (double) Math.min(playerCells, cpuCells) / Math.max(playerCells, cpuCells);
 
-
-/**
- * Registra la asignación de flotas asimétricas
- */
-private void logAsymmetricFleetAssignment(List<Ship> playerFleet, List<Ship> cpuFleet) {
-    // Información de la flota del jugador
-    Map<ShipType, Integer> playerComposition = new HashMap<>();
-    int playerTotalCells = 0;
-
-    for (Ship ship : playerFleet) {
-        ShipType type = ship.getType();
-        playerComposition.merge(type, 1, Integer::sum);
-        playerTotalCells += type.getSize();
-    }
-
-    // Información de la flota de la CPU
-    Map<ShipType, Integer> cpuComposition = new HashMap<>();
-    int cpuTotalCells = 0;
-
-    for (Ship ship : cpuFleet) {
-        ShipType type = ship.getType();
-        cpuComposition.merge(type, 1, Integer::sum);
-        cpuTotalCells += type.getSize();
-    }
-
-    StringBuilder sb = new StringBuilder();
-    sb.append("📊 CONFIGURACIÓN ASIMÉTRICA:\n");
-
-    // Flota del jugador
-    sb.append("👤 JUGADOR - ").append(playerFleet.size()).append(" barcos, ").append(playerTotalCells).append(" casillas: ");
-    for (Map.Entry<ShipType, Integer> entry : playerComposition.entrySet()) {
-        sb.append(entry.getValue()).append("x ").append(entry.getKey().getName()).append(", ");
-    }
-    if (sb.length() > 2) {
-        sb.setLength(sb.length() - 2);
-    }
-
-    sb.append("\n");
-
-    // Flota de la CPU
-    sb.append("🤖 CPU - ").append(cpuFleet.size()).append(" barcos, ").append(cpuTotalCells).append(" casillas: ");
-    for (Map.Entry<ShipType, Integer> entry : cpuComposition.entrySet()) {
-        sb.append(entry.getValue()).append("x ").append(entry.getKey().getName()).append(", ");
-    }
-    if (sb.length() > 2) {
-        sb.setLength(sb.length() - 2);
-    }
-
-    System.out.println(sb.toString());
-}
-
-
-
-/**
- * Analiza el balance de las flotas asimétricas
- */
-private void analyzeAsymmetricBalance() {
-    int playerPower = calculateFleetPower(playerShips);
-    int cpuPower = calculateFleetPower(CPUShips);
-    int playerCells = playerShips.stream().mapToInt(ship -> ship.getType().getSize()).sum();
-    int cpuCells = CPUShips.stream().mapToInt(ship -> ship.getType().getSize()).sum();
-
-    double powerRatio = (double) Math.min(playerPower, cpuPower) / Math.max(playerPower, cpuPower);
-    double cellRatio = (double) Math.min(playerCells, cpuCells) / Math.max(playerCells, cpuCells);
-
-    String balanceLevel;
-    if (powerRatio >= 0.8) {
-        balanceLevel = "⚖️ BALANCEADO";
-    } else if (powerRatio >= 0.6) {
-        balanceLevel = "⚡ MODERADAMENTE ASIMÉTRICO";
-    } else if (powerRatio >= 0.4) {
-        balanceLevel = "🎯 ALTAMENTE ASIMÉTRICO";
-    } else {
-        balanceLevel = "💀 EXTREMADAMENTE ASIMÉTRICO";
-    }
-
-    System.out.println("📈 Análisis de balance asimétrico:");
-    System.out.println("   Poder - Jugador: " + playerPower + ", CPU: " + cpuPower
-            + ", Ratio: " + String.format("%.2f", powerRatio));
-    System.out.println("   Casillas - Jugador: " + playerCells + ", CPU: " + cpuCells
-            + ", Ratio: " + String.format("%.2f", cellRatio));
-    System.out.println("   Nivel: " + balanceLevel);
-
-    // Sugerir estrategias basadas en la asimetría
-    suggestAsymmetricStrategies(playerPower, cpuPower, playerCells, cpuCells);
-}
-
-/**
- * Sugiere estrategias basadas en la configuración asimétrica
- */
-private void suggestAsymmetricStrategies(int playerPower, int cpuPower, int playerCells, int cpuCells) {
-    System.out.println("🎯 Estrategias sugeridas:");
-
-    if (playerPower > cpuPower) {
-        // Jugador tiene ventaja de poder
-        if (playerCells > cpuCells) {
-            System.out.println("   👤 JUGADOR: Ataque agresivo - Usa tu superioridad numérica");
-            System.out.println("   🤖 CPU: Defensa estratégica - Enfócate en barcos grandes del jugador");
+        String balanceLevel;
+        if (powerRatio >= 0.8) {
+            balanceLevel = "⚖️ BALANCEADO";
+        } else if (powerRatio >= 0.6) {
+            balanceLevel = "⚡ MODERADAMENTE ASIMÉTRICO";
+        } else if (powerRatio >= 0.4) {
+            balanceLevel = "🎯 ALTAMENTE ASIMÉTRICO";
         } else {
-            System.out.println("   👤 JUGADOR: Ataque preciso - Tus barcos son más poderosos pero menos numerosos");
-            System.out.println("   🤖 CPU: Guerra de desgaste - Aprovecha tu mayor número de blancos");
+            balanceLevel = "💀 EXTREMADAMENTE ASIMÉTRICO";
         }
-    } else {
-        // CPU tiene ventaja de poder
-        if (cpuCells > playerCells) {
-            System.out.println("   👤 JUGADOR: Defensa inteligente - Evita confrontaciones directas");
-            System.out.println("   🤖 CPU: Ataque constante - Presiona con tu superioridad numérica");
+
+        System.out.println("📈 Análisis de balance asimétrico:");
+        System.out.println("   Poder - Jugador: " + playerPower + ", CPU: " + cpuPower
+                + ", Ratio: " + String.format("%.2f", powerRatio));
+        System.out.println("   Casillas - Jugador: " + playerCells + ", CPU: " + cpuCells
+                + ", Ratio: " + String.format("%.2f", cellRatio));
+        System.out.println("   Nivel: " + balanceLevel);
+
+        // Sugerir estrategias basadas en la asimetría
+        suggestAsymmetricStrategies(playerPower, cpuPower, playerCells, cpuCells);
+    }
+
+    /**
+     * Sugiere estrategias basadas en la configuración asimétrica
+     */
+    private void suggestAsymmetricStrategies(int playerPower, int cpuPower, int playerCells, int cpuCells) {
+        System.out.println("🎯 Estrategias sugeridas:");
+
+        if (playerPower > cpuPower) {
+            // Jugador tiene ventaja de poder
+            if (playerCells > cpuCells) {
+                System.out.println("   👤 JUGADOR: Ataque agresivo - Usa tu superioridad numérica");
+                System.out.println("   🤖 CPU: Defensa estratégica - Enfócate en barcos grandes del jugador");
+            } else {
+                System.out.println("   👤 JUGADOR: Ataque preciso - Tus barcos son más poderosos pero menos numerosos");
+                System.out.println("   🤖 CPU: Guerra de desgaste - Aprovecha tu mayor número de blancos");
+            }
         } else {
-            System.out.println("   👤 JUGADOR: Tácticas de guerrilla - Ataca puntos débiles");
-            System.out.println("   🤖 CPU: Ataque concentrado - Enfócate en eliminar barcos clave");
+            // CPU tiene ventaja de poder
+            if (cpuCells > playerCells) {
+                System.out.println("   👤 JUGADOR: Defensa inteligente - Evita confrontaciones directas");
+                System.out.println("   🤖 CPU: Ataque constante - Presiona con tu superioridad numérica");
+            } else {
+                System.out.println("   👤 JUGADOR: Tácticas de guerrilla - Ataca puntos débiles");
+                System.out.println("   🤖 CPU: Ataque concentrado - Enfócate en eliminar barcos clave");
+            }
         }
     }
-}
 
-/**
- * Obtiene el número máximo de casillas permitidas para una flota
- */
-private int getMaxFleetCells() {
-    // Basado en un tablero 10x10, dejando espacio para maniobras
-    return 25;
-}
+    /**
+     * Obtiene el número máximo de casillas permitidas para una flota
+     */
+    private int getMaxFleetCells() {
+        // Basado en un tablero 10x10, dejando espacio para maniobras
+        return 25;
+    }
 
-/**
- * Obtiene el número mínimo de casillas recomendadas para una flota
- */
-private int getMinFleetCells() {
-    // Mínimo para que el juego sea interesante
-    return 8;
-}
+    /**
+     * Obtiene el número mínimo de casillas recomendadas para una flota
+     */
+    private int getMinFleetCells() {
+        // Mínimo para que el juego sea interesante
+        return 8;
+    }
 
     // ========== MÉTODOS DE CREACIÓN DE FLOTAS ==========
-    
-    private List<Ship> createStandardFleet() {
+    /**
+     * Crea una flota estándar - Método que falta
+     */
+    public static List<Ship> createStandardFleet() {
         List<Ship> fleet = new ArrayList<>();
         fleet.add(new Ship(ShipType.CARRIER));      // 5 casillas
         fleet.add(new Ship(ShipType.BATTLESHIP));   // 4 casillas  
@@ -1289,7 +1391,6 @@ private int getMinFleetCells() {
     }
 
     // ========== MÉTODOS AUXILIARES PARA FLOTAS ESPECIALES ==========
-    
     private Ship createSpecialShip(String specialType, int size) {
         Ship ship;
         switch (specialType) {
@@ -1309,7 +1410,6 @@ private int getMinFleetCells() {
     }
 
     // ========== MÉTODOS DE CONFIGURACIÓN DE HABILIDADES ==========
-    
     private void enhanceSkillsForSpecialFleet() {
         SkillSystem skills = getPlayerSkills();
         skills.reset();
@@ -1361,9 +1461,10 @@ private int getMinFleetCells() {
     }
 
     // ========== MÉTODOS DE INFORMACIÓN ==========
-    
     /**
      * Verifica si ambas flotas están listas para jugar
+     *
+     * @return
      */
     public boolean areFleetsReady() {
         boolean playerReady = !playerShips.isEmpty();
@@ -1381,14 +1482,16 @@ private int getMinFleetCells() {
 
     /**
      * Obtiene información sobre las flotas
+     *
+     * @return
      */
     public String getFleetInfo() {
         StringBuilder info = new StringBuilder();
         info.append("=== INFORMACIÓN DE FLOTAS ===\n");
-        
+
         int playerCells = playerShips.stream().mapToInt(ship -> ship.getType().getSize()).sum();
         int cpuCells = CPUShips.stream().mapToInt(ship -> ship.getType().getSize()).sum();
-        
+
         info.append("Jugador: ").append(playerShips.size()).append(" barcos (").append(playerCells).append(" casillas)\n");
         info.append("CPU: ").append(CPUShips.size()).append(" barcos (").append(cpuCells).append(" casillas)");
 
@@ -1397,7 +1500,8 @@ private int getMinFleetCells() {
 
     /**
      * Verifica si las flotas están balanceadas
-     * @return 
+     *
+     * @return
      */
     public boolean areFleetsBalanced() {
         int playerPower = calculateFleetPower(playerShips);
@@ -1429,7 +1533,5 @@ private int getMinFleetCells() {
                 })
                 .sum();
     }
-    
-    
-    
+
 }

@@ -37,7 +37,7 @@ public class GameStateMapper {
         
         // Barcos
         dto.setBarcosJugador(mapShips(gameController.getPlayerShips()));
-        dto.setBarcosCPU(mapShips(gameController.getCPUShips()));
+        dto.setBarcosCPU(mapShips(gameController.getCpuShips()));
         
         // Habilidades
         dto.setHabilidadesJugador(mapSkills(gameController.getPlayerSkills()));

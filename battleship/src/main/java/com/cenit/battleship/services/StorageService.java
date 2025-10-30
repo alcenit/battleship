@@ -157,7 +157,7 @@ public class StorageService {
 
         // Barcos
         state.setPlayerShips(gameController.getPlayerShips());
-        state.setCPUShips(gameController.getCPUShips());
+        state.setCPUShips(gameController.getCpuShips());
 
         // Habilidades - Comentado hasta que implementes los métodos
         // state.setPlayerSkills(serializeSkills(gameController.getPlayerSkills()));

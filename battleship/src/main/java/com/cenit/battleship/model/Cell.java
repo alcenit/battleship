@@ -198,6 +198,40 @@ public class Cell {
     public boolean isIntactShip() {
         return hasShip() && !hasBeenShot;
     }
+    
+    /**
+     * Remueve el barco de esta celda y restablece su estado
+     */
+    public void removeShip() {
+        this.ship = null;
+        
+        // Si la celda tenía un barco pero no había sido disparada, restablecer a agua
+        // Si ya fue disparada y era un impacto, mantener el estado de disparo pero sin barco
+        if (!hasBeenShot && isHit) {
+            // Este caso no debería ocurrir normalmente, pero por seguridad
+            this.isHit = false;
+        } else if (hasBeenShot && isHit) {
+            // Si fue un impacto y quitamos el barco, mantenemos el disparo registrado
+            // pero ya no es un impacto (debería ser un fallo ahora que no hay barco)
+            this.isHit = false;
+        }
+        
+        System.out.println("✅ Barco removido de celda " + (coordinate != null ? coordinate.aNotacion() : "desconocida"));
+    }
+
+    /**
+     * Verifica si la celda está vacía (sin barco y sin disparos)
+     */
+    public boolean isEmpty() {
+        return this.ship == null && !this.hasBeenShot;
+    }
+
+    /**
+     * Verifica si la celda está disponible para colocar un barco
+     */
+    public boolean isAvailableForShip() {
+        return this.ship == null && !this.hasBeenShot;
+    }
 
     // ========== MÉTODOS DE RESET ==========
     /**
@@ -215,6 +249,49 @@ public class Cell {
     public void resetShotState() {
         this.hasBeenShot = false;
         this.isHit = false;
+    }
+
+    /**
+     * Obtiene información detallada de la celda para debugging
+     */
+    public String getDetailedInfo() {
+        return String.format("Celda %s | Barco: %s | Disparada: %s | Impacto: %s | Estado: %s",
+            coordinate != null ? coordinate.aNotacion() : "N/A",
+            ship != null ? ship.getType().getName() : "Ninguno",
+            hasBeenShot ? "Sí" : "No",
+            isHit ? "Sí" : "No",
+            getState()
+        );
+    }
+
+    /**
+     * Verifica si esta celda es adyacente a otra celda (horizontal o vertical)
+     */
+    public boolean isAdjacentTo(Cell other) {
+        if (this.coordinate == null || other == null || other.getCoordinate() == null) {
+            return false;
+        }
+        
+        int dx = Math.abs(this.coordinate.getX() - other.getCoordinate().getX());
+        int dy = Math.abs(this.coordinate.getY() - other.getCoordinate().getY());
+        
+        return (dx == 1 && dy == 0) || (dx == 0 && dy == 1);
+    }
+
+    /**
+     * Verifica si esta celda está en la misma fila que otra celda
+     */
+    public boolean isSameRow(Cell other) {
+        return this.coordinate != null && other != null && other.getCoordinate() != null &&
+               this.coordinate.getX() == other.getCoordinate().getX();
+    }
+
+    /**
+     * Verifica si esta celda está en la misma columna que otra celda
+     */
+    public boolean isSameColumn(Cell other) {
+        return this.coordinate != null && other != null && other.getCoordinate() != null &&
+               this.coordinate.getY() == other.getCoordinate().getY();
     }
 
     // ========== MÉTODOS DE DEBUG ==========

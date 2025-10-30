@@ -3,7 +3,7 @@
   "playerName": "Mauri",
   "avatar": "🚢",
   "creationDate": "Oct 24, 2025, 12:54:17 PM",
-  "lastPlayed": "Oct 28, 2025, 3:17:22 PM",
+  "lastPlayed": "Oct 29, 2025, 9:16:13 PM",
   "statistics": {
     "gamesPlayed": 0,
     "gamesWon": 0,

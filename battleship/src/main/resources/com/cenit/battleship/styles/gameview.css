@@ -180,3 +180,48 @@
 .progress-bar .track {
     -fx-background-color: #3E5A73; /* Color de fondo de la barra */
 }
+/* Estilos para mensajes */
+.mensaje-normal {
+    -fx-text-fill: #2c3e50;
+    -fx-font-size: 14px;
+    -fx-font-weight: normal;
+}
+
+.mensaje-error {
+    -fx-text-fill: #e74c3c;
+    -fx-font-size: 14px;
+    -fx-font-weight: bold;
+}
+
+.mensaje-especial {
+    -fx-text-fill: #27ae60;
+    -fx-font-size: 16px;
+    -fx-font-weight: bold;
+}
+
+.mensaje-info {
+    -fx-text-fill: #3498db;
+    -fx-font-size: 14px;
+    -fx-font-weight: normal;
+}
+
+/* Estilo para el label de mensajes principal */
+#lblMessage {
+    -fx-font-family: "Arial";
+    -fx-alignment: center;
+    -fx-padding: 5px;
+    -fx-background-radius: 5px;
+}
+
+/* Estados de turno */
+.turno-jugador {
+    -fx-text-fill: #27ae60;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}
+
+.turno-cpu {
+    -fx-text-fill: #e74c3c;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+}

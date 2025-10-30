@@ -55,7 +55,7 @@
       
       <!-- Panel izquierdo: Tablero del jugador -->
       <VBox alignment="CENTER" spacing="10">
-         <Label styleClass="panel-title" text="Tu Flota" />
+         <Label styleClass="panel-title" text="Tu Flota Almirante" />
          <GridPane fx:id="playerBoard" hgap="1" vgap="1" />
          <Label fx:id="lblPlayerState" styleClass="estado-flota" text="Barcos: 5/5" />
       </VBox>

@@ -34,48 +34,7 @@ public class ShipRenderer {
  * Método RENDER SHIP para PlacementViewController - VERSIÓN CORREGIDA
  * Maneja correctamente la rotación y dimensiones de barcos verticales
  */
-  /**
-public static ImageView renderShip(Ship ship, int width, int height) {
-    System.out.println("renderShip/ShipRenderer\n");
-    try {
-        Image image = getShipImage(ship.getType());
-        
-        if (image == null) {
-            return createFallbackShip(ship, width, height);
-        }
 
-        ImageView imageView = new ImageView(image);
-        
-        // ✅ MEJORA: Determinar dimensiones basado en dirección
-        if (ship.getDirection() == Direction.VERTICAL) {
-            // Para vertical: intercambiar lógicamente dimensiones
-            imageView.setRotate(90);
-            imageView.setFitWidth(height);  // El alto recibido se usa como ancho
-            imageView.setFitHeight(width);  // El ancho recibido se usa como alto
-        } else {
-            // Para horizontal: dimensiones normales
-            imageView.setFitWidth(width);
-            imageView.setFitHeight(height);
-        }
-        
-        // ✅ CORRECCIÓN: Mantener proporciones
-        imageView.setPreserveRatio(true);
-        imageView.setSmooth(true);
-
-        System.out.println("✅ Barco renderizado MEJORADO: " + ship.getType() + 
-                         " | Dirección: " + ship.getDirection() +
-                         " | Dimensiones solicitadas: " + width + "x" + height +
-                         " | Dimensiones aplicadas: " + imageView.getFitWidth() + "x" + imageView.getFitHeight() +
-                         " | Rotación: " + imageView.getRotate() + "°");
-
-        return imageView;
-
-    } catch (Exception e) {
-        System.err.println("❌ Error renderizando barco: " + e.getMessage());
-        return createFallbackShip(ship, width, height);
-    }
-}
-*/
 //versioncorregida
 public static ImageView renderShip(Ship ship, int width, int height) {
     try {

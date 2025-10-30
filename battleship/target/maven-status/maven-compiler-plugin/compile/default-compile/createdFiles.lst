@@ -8,7 +8,6 @@ com\cenit\battleship\view\ConfigurationViewController.class
 com\cenit\battleship\model\Game$GameStats.class
 com\cenit\battleship\services\dto\BoardDTO.class
 com\cenit\battleship\model\enums\ShotResult.class
-com\cenit\battleship\view\GameViewController$3.class
 com\cenit\battleship\controller\SkillController.class
 com\cenit\battleship\services\JsonPersistenceStrategy.class
 com\cenit\battleship\model\GameState.class

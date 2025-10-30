@@ -12,11 +12,13 @@ import com.cenit.battleship.model.enums.CellState;
 import com.cenit.battleship.model.enums.GamePhase;
 import com.cenit.battleship.model.enums.ShotResult;
 import com.cenit.battleship.model.GameConfiguration;
+import com.cenit.battleship.model.PlayerProfile;
 import com.cenit.battleship.model.enums.Direction;
 import com.cenit.battleship.services.StorageService;
 import com.cenit.battleship.view.components.ShipRenderer;
 import static com.cenit.battleship.view.components.ShipRenderer.renderShipCorrected;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
@@ -53,7 +55,12 @@ public class GameViewController implements Initializable {
     private StorageService storageService;
     public SoundController soundController;
     private AnimationController animationController;
-    private final GameConfiguration config = GameConfiguration.getInstance();
+    private GameConfiguration config;
+
+    // Variables existentes
+    private List<Ship> placedShips; // Esta variable debería existir ya
+
+    private PlayerProfile currentProfile;
 
     private boolean activeGame = true;
 
@@ -108,61 +115,138 @@ public class GameViewController implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        System.out.println("DEBUG: Entrando en initialize()");
+        System.out.println("DEBUG: GameViewController - Iniciando inicialización");
 
-        // Inicializar matrices de botones con el tamaño correcto
-        int boardSize = config.getBoardSize();
-        playerBoardButtons = new Button[boardSize][boardSize];
-        cpuBoardButtons = new Button[boardSize][boardSize];
+        try {
+            // Inicializar configuración
+            this.config = GameConfiguration.getInstance();
 
-        // --- Inicializaciones rápidas que SÍ pueden estar en el hilo principal ---
-        if (gameControllerStatic != null) {
-            this.gameController = gameControllerStatic;
-            gameControllerStatic = null;
-        } else {
-            this.gameController = new GameController();
-        }
+            // Inicializar matrices de botones con el tamaño correcto
+            int boardSize = config.getBoardSize();
+            playerBoardButtons = new Button[boardSize][boardSize];
+            cpuBoardButtons = new Button[boardSize][boardSize];
 
-        storageService = new StorageService();
-        soundController = SoundController.getInstance();
-        animationController = AnimationController.getInstance();
+            debugInitialization();
 
-        // Preparamos la interfaz (los GridPane vacíos)
-        initializeInterface();
-        configureEvents();
-        configurarMenu();
-
-        // --- La parte pesada se ejecuta en un hilo secundario ---
-        Task<Void> gameSetupTask = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                // ¡ESTE CÓDIGO SE EJECUTA EN SEGUNDO PLANO!
-                // El hilo principal queda libre y puede mostrar la GameView inmediatamente.
-                System.out.println("DEBUG: Tarea en segundo plano: Iniciando startGame()");
-                startGame(); // <--- Movemos la llamada pesada AQUÍ
-                System.out.println("DEBUG: Tarea en segundo plano: startGame() finalizado.");
-                return null;
+            // --- VERIFICACIÓN DEL GameController ---
+            if (gameControllerStatic != null) {
+                this.gameController = gameControllerStatic;
+                gameControllerStatic = null;
+                System.out.println("✅ GameController establecido desde variable estática");
+            } else {
+                // Si no hay GameController, mostrar error
+                System.err.println("❌ ERROR: GameController estático es null - No se puede iniciar el juego");
+                showErrorAndReturnToMainMenu("Error: No se pudo cargar el juego. Vuelve a iniciar desde el menú principal.");
+                return;
             }
-        };
 
-        // Este código se ejecuta CUANDO la tarea en segundo plano termina
-        gameSetupTask.setOnSucceeded(event -> {
-            System.out.println("DEBUG: Tarea finalizada. Interfaz lista para ser usada.");
-            // Aquí podrías hacer actualizaciones finales de la UI si fueran necesarias
-            // después de que el juego se ha configurado completamente.
-            // Por ejemplo, actualizar un label con el nombre del jugador.
+            // Verificar que el GameController sea válido
+            if (this.gameController == null) {
+                System.err.println("❌ ERROR CRÍTICO: GameController es null después de la inicialización");
+                showErrorAndReturnToMainMenu("Error crítico: No se pudo inicializar el controlador del juego");
+                return;
+            }
 
-        });
+            // Inicializar servicios
+            storageService = new StorageService();
+            soundController = SoundController.getInstance();
+            animationController = AnimationController.getInstance();
 
-        // Iniciamos la tarea en un nuevo hilo
-        Thread setupThread = new Thread(gameSetupTask);
-        setupThread.setDaemon(true); // Permite que la aplicación se cierre aunque este hilo siga corriendo
-        setupThread.start();
+            // Inicializar componentes de la UI
+            System.out.println("🔄 Inicializando interfaz de usuario...");
+            initializeInterface();
+            configureEvents();
+            configurarMenu();
 
-        // Esto puede iniciarse en el hilo principal porque es solo reproducir música
-        soundController.startBackgroundMusic();
+            // Programar inicio del juego en el hilo de JavaFX
+            Platform.runLater(() -> {
+                try {
+                    System.out.println("🎮 Iniciando juego en JavaFX Thread...");
+                    startGameView(); // Cambié el nombre para evitar confusión
 
-        System.out.println("DEBUG: Saliendo de initialize(). La vista debería ser visible ahora.");
+                    // Iniciar música de fondo
+                    if (soundController != null) {
+                        soundController.startBackgroundMusic();
+                    }
+
+                    System.out.println("✅ GameView completamente inicializada y lista");
+
+                } catch (Exception e) {
+                    System.err.println("❌ ERROR durante el inicio del juego: " + e.getMessage());
+                    e.printStackTrace();
+                    showErrorAndReturnToMainMenu("Error durante el inicio del juego: " + e.getMessage());
+                }
+            });
+
+        } catch (Exception e) {
+            System.err.println("❌ ERROR durante la inicialización: " + e.getMessage());
+            e.printStackTrace();
+            showErrorAndReturnToMainMenu("Error fatal durante la inicialización: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Método específico de GameViewController para iniciar la vista de juego
+     */
+    private void startGameView() {
+        System.out.println("🎯 Iniciando vista de juego...");
+
+        try {
+            // Verificar que tenemos un GameController válido
+            if (gameController == null) {
+                throw new IllegalStateException("GameController no está inicializado");
+            }
+
+            // Actualizar el estado del turno
+            updateTurnStatus();
+
+            // Actualizar los tableros
+            updateBoardDisplay(playerBoardButtons, false);
+            updateBoardDisplay(cpuBoardButtons, true);
+
+            // Actualizar paneles de información
+            updateInformationPanels();
+            updateSkills();
+            updateSkillPoints();
+
+            // Configurar mensaje inicial
+            if (lblMessage != null) {
+                if (gameController.isPlayerTurn()) {
+                    lblMessage.setText("¡Comienza la batalla! Tu turno.");
+                } else {
+                    lblMessage.setText("¡Comienza la batalla! Turno de la CPU.");
+                    // Si es turno de la CPU, ejecutar su turno después de un delay
+                    runCPUTurn();
+                }
+            }
+
+            // Activar el juego
+            activeGame = true;
+
+            System.out.println("✅ Vista de juego iniciada correctamente");
+            System.out.println("   - Turno actual: " + (gameController.isPlayerTurn() ? "Jugador" : "CPU"));
+            System.out.println("   - Barcos jugador: " + gameController.getPlayerShips().size());
+            System.out.println("   - Barcos CPU: " + gameController.getCpuShips().size());
+
+        } catch (Exception e) {
+            System.err.println("❌ ERROR en startGameView: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Error al iniciar la vista de juego", e);
+        }
+    }
+
+    /**
+     * Método de debug para la inicialización
+     */
+    private void debugInitialization() {
+        System.out.println("=== DEBUG INITIALIZATION ===");
+        System.out.println("GameController: " + (gameController != null ? "OK" : "NULL"));
+        System.out.println("Player Board: " + (playerBoard != null ? "OK" : "NULL"));
+        System.out.println("CPU Board: " + (cpuBoard != null ? "OK" : "NULL"));
+        System.out.println("Board Size: " + config.getBoardSize());
+        System.out.println("Player Buttons: " + (playerBoardButtons != null ? playerBoardButtons.length + "x" + playerBoardButtons[0].length : "NULL"));
+        System.out.println("CPU Buttons: " + (cpuBoardButtons != null ? cpuBoardButtons.length + "x" + cpuBoardButtons[0].length : "NULL"));
+        System.out.println("============================");
     }
 
     private void initializeInterface() {
@@ -394,6 +478,45 @@ public class GameViewController implements Initializable {
         }
     }
 
+    private void showErrorAndReturnToMainMenu(String errorMessage) {
+        System.err.println("💥 ERROR GRAVE: " + errorMessage);
+
+        // Mostrar alerta de error
+        Platform.runLater(() -> {
+            try {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Error de Inicialización");
+                alert.setHeaderText("No se pudo cargar el juego");
+                alert.setContentText(errorMessage + "\n\nLa aplicación volverá al menú principal.");
+
+                // Mostrar mensaje de error en la UI
+                showErrorMessage("Error crítico: " + errorMessage);
+
+                // Esperar a que el usuario confirme
+                alert.showAndWait();
+
+                // Detener música si está reproduciéndose
+                if (soundController != null) {
+                    soundController.stopBackgroundMusic();
+                }
+
+                // Volver al menú principal
+                App.changeView("view/MainView");
+
+            } catch (Exception ex) {
+                System.err.println("❌ ERROR al mostrar diálogo de error: " + ex.getMessage());
+                ex.printStackTrace();
+                // Fallback directo al menú principal
+                try {
+                    App.changeView("view/MainView");
+                } catch (Exception fatalEx) {
+                    System.err.println("💥 ERROR FATAL: No se pudo volver al menú principal");
+                    fatalEx.printStackTrace();
+                }
+            }
+        });
+    }
+
     private void exitToMainMenu() {
         Alert confirmacion = new Alert(Alert.AlertType.CONFIRMATION);
         confirmacion.setTitle("Salir al Menú Principal");
@@ -412,66 +535,61 @@ public class GameViewController implements Initializable {
         });
     }
 
-    private void showMessage(String mensaje) {
-        if (lblMessage != null) {
-            lblMessage.setText(mensaje);
-        }
-        System.out.println("GameViewController: " + mensaje);
-    }
-
     private void configureEvents() {
         btnPause.setOnAction(e -> pauseGame());
         btnReset.setOnAction(e -> resetGame());
         btnSkill.setOnAction(e -> useSkill());
     }
 
-    private void startGame() {
-        System.out.println("entrando en startgame");//<-- sout de control
-        activeGame = true;
-        updateTurnStatus();
-        lblMessage.setText("¡Comienza la batalla! Tu turno.");
-        System.out.println("saliendo de  startgame");//<-- sout de control
-    }
-    
     /**
      * Crea un overlay de barco específico para el tablero
      */
     /**
      * Crea un overlay de barco específico para el tablero - VERSIÓN CORREGIDA
      */
-   private StackPane createShipOverlayForBoard(Ship ship, double cellWidth, double cellHeight) {
-    StackPane overlay = new StackPane();
-    
-    int shipSize = ship.getType().getSize();
-    boolean isVertical = ((ship.getDirection()) == Direction.VERTICAL);
-    
-    double width, height;
-    
-    // ✅ CORRECCIÓN: Dimensiones lógicas correctas
-    if (isVertical) {
-        // VERTICAL: ancho = 1 celda, alto = tamaño * celda
-        width = cellWidth;                    // 1 celda de ancho
-        height = cellHeight * shipSize;       // tamaño * altura de celda
-    } else {
-        // HORIZONTAL: ancho = tamaño * celda, alto = 1 celda  
-        width = cellWidth * shipSize;         // tamaño * ancho de celda
-        height = cellHeight;                  // 1 celda de alto
+    private StackPane createShipOverlayForBoard(Ship ship, double cellWidth, double cellHeight) {
+        StackPane overlay = new StackPane();
+
+        if (ship == null || ship.getType() == null) {
+            System.err.println("ERROR: Ship o ship type es null");
+            return overlay;
+        }
+
+        int shipSize = ship.getType().getSize();
+        boolean isVertical = (ship.getDirection() == Direction.VERTICAL);
+
+        double width, height;
+
+        // ✅ CORRECCIÓN: Dimensiones lógicas correctas
+        if (isVertical) {
+            // VERTICAL: ancho = 1 celda, alto = tamaño * celda
+            width = cellWidth;                    // 1 celda de ancho
+            height = cellHeight * shipSize;       // tamaño * altura de celda
+        } else {
+            // HORIZONTAL: ancho = tamaño * celda, alto = 1 celda  
+            width = cellWidth * shipSize;         // tamaño * ancho de celda
+            height = cellHeight;                  // 1 celda de alto
+        }
+
+        overlay.setPrefSize(width, height);
+        overlay.setMinSize(width, height);
+        overlay.setMaxSize(width, height);
+
+        try {
+            // ✅ CORRECCIÓN: Usar dimensiones CORRECTAS para el renderizado
+            ImageView shipImage = renderShipCorrected(ship, width, height, isVertical);
+            overlay.getChildren().add(shipImage);
+
+            System.out.println("✅ Overlay creado: " + ship.getType()
+                    + " | Dirección: " + ship.getDirection()
+                    + " | Tamaño overlay: " + width + "x" + height);
+        } catch (Exception e) {
+            System.err.println("ERROR al crear imagen del barco: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return overlay;
     }
-    
-    overlay.setPrefSize(width, height);
-    overlay.setMinSize(width, height);
-    overlay.setMaxSize(width, height);
-    
-    // ✅ CORRECCIÓN: Usar dimensiones CORRECTAS para el renderizado
-    ImageView shipImage = renderShipCorrected(ship, width, height, isVertical);
-    overlay.getChildren().add(shipImage);
-    
-    System.out.println("✅ Overlay creado: " + ship.getType() + 
-                     " | Dirección: " + ship.getDirection() +
-                     " | Tamaño overlay: " + width + "x" + height);
-    
-    return overlay;
-}
 
     private void handlePlayerShot(int x, int y) {
         if (!activeGame || !gameController.isPlayerTurn() || gameController.isGameOver()) {
@@ -719,9 +837,6 @@ public class GameViewController implements Initializable {
         return ship.getSegments().get(0).equals(coord);
     }
 
-    
-   
-
     /**
      * Tooltip mejorado - no revela información del enemigo
      */
@@ -815,7 +930,7 @@ public class GameViewController implements Initializable {
         updateFleetPanel(playerInfoPanel, gameController.getPlayerShips(), "Tus Barcos");
 
         // Panel de la CPU  
-        updateFleetPanel(cpuInfoPanel, gameController.getCPUShips(), "Barcos Enemigos");
+        updateFleetPanel(cpuInfoPanel, gameController.getCpuShips(), "Barcos Enemigos");
 
         // Actualizar progreso del juego
         updateGameProgress();
@@ -855,9 +970,9 @@ public class GameViewController implements Initializable {
 
     private void updateGameProgress() {
         if (gameProgress != null) {
-            int totalShips = gameController.getPlayerShips().size() + gameController.getCPUShips().size();
+            int totalShips = gameController.getPlayerShips().size() + gameController.getCpuShips().size();
             int sunkShips = (int) (gameController.getPlayerShips().stream().filter(Ship::isSunk).count()
-                    + gameController.getCPUShips().stream().filter(Ship::isSunk).count());
+                    + gameController.getCpuShips().stream().filter(Ship::isSunk).count());
 
             double progress = totalShips > 0 ? (double) sunkShips / totalShips : 0.0;
             gameProgress.setProgress(progress);
@@ -915,7 +1030,7 @@ public class GameViewController implements Initializable {
     private void resetGame() {
         try {
             soundController.stopBackgroundMusic();
-            App.changeView("view/MainView");
+            App.changeView("/com/battleship/view/MainView.fxml");
         } catch (Exception ex) {
             ex.printStackTrace();
         }
@@ -934,6 +1049,97 @@ public class GameViewController implements Initializable {
         }
 
         showDialogEndGame(playerWin);
+    }
+
+    /**
+     * Muestra un mensaje en la interfaz de usuario
+     *
+     * @param message El mensaje a mostrar
+     */
+    private void showMessage(String message) {
+        // Asegurarse de que se ejecuta en el hilo de JavaFX
+        Platform.runLater(() -> {
+            try {
+                if (lblMessage != null) {
+                    lblMessage.setText(message);
+
+                    // Aplicar estilo según el tipo de mensaje
+                    if (message.toLowerCase().contains("error")
+                            || message.toLowerCase().contains("crítico")
+                            || message.toLowerCase().contains("fallo")) {
+                        // Mensaje de error - estilo rojo
+                        lblMessage.getStyleClass().removeAll("mensaje-normal", "mensaje-especial", "mensaje-info");
+                        lblMessage.getStyleClass().add("mensaje-error");
+                    } else if (message.toLowerCase().contains("éxito")
+                            || message.toLowerCase().contains("correcto")
+                            || message.toLowerCase().contains("victoria")) {
+                        // Mensaje de éxito - estilo verde
+                        lblMessage.getStyleClass().removeAll("mensaje-normal", "mensaje-error", "mensaje-info");
+                        lblMessage.getStyleClass().add("mensaje-especial");
+                    } else {
+                        // Mensaje normal - estilo por defecto
+                        lblMessage.getStyleClass().removeAll("mensaje-error", "mensaje-especial", "mensaje-info");
+                        lblMessage.getStyleClass().add("mensaje-normal");
+                    }
+                }
+
+                // También imprimir en consola para debugging
+                System.out.println("📢 GameView: " + message);
+
+            } catch (Exception e) {
+                System.err.println("❌ Error al mostrar mensaje: " + e.getMessage());
+                // Fallback: imprimir en consola
+                System.out.println("📢 [FALLBACK] " + message);
+            }
+        });
+    }
+
+    /**
+     * Muestra un mensaje temporal que se desvanece después de un tiempo
+     *
+     * @param message El mensaje a mostrar
+     * @param durationSeconds Duración en segundos
+     */
+    private void showTemporaryMessage(String message, int durationSeconds) {
+        showMessage(message);
+
+        PauseTransition pause = new PauseTransition(Duration.seconds(durationSeconds));
+        pause.setOnFinished(e -> {
+            // Restaurar mensaje normal después del tiempo
+            if (lblMessage != null && lblMessage.getText().equals(message)) {
+                lblMessage.setText("¡Buena suerte, Almirante!");
+                lblMessage.getStyleClass().removeAll("mensaje-error", "mensaje-especial", "mensaje-info");
+                lblMessage.getStyleClass().add("mensaje-normal");
+            }
+        });
+        pause.play();
+    }
+
+    /**
+     * Muestra un mensaje de error específico
+     *
+     * @param errorMessage El mensaje de error
+     */
+    private void showErrorMessage(String errorMessage) {
+        showMessage("❌ " + errorMessage);
+    }
+
+    /**
+     * Muestra un mensaje de éxito
+     *
+     * @param successMessage El mensaje de éxito
+     */
+    private void showSuccessMessage(String successMessage) {
+        showMessage("✅ " + successMessage);
+    }
+
+    /**
+     * Muestra un mensaje informativo
+     *
+     * @param infoMessage El mensaje informativo
+     */
+    private void showInfoMessage(String infoMessage) {
+        showMessage("ℹ️ " + infoMessage);
     }
 
     private void showDialogEndGame(boolean victoria) {
@@ -971,4 +1177,5 @@ public class GameViewController implements Initializable {
         pause.setOnFinished(e -> lblMessage.getStyleClass().remove("mensaje-especial"));
         pause.play();
     }
+
 }

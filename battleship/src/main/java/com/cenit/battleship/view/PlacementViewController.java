@@ -2,6 +2,7 @@ package com.cenit.battleship.view;
 
 import com.cenit.battleship.App;
 import com.cenit.battleship.controller.GameController;
+import com.cenit.battleship.model.Board;
 import com.cenit.battleship.model.Coordinate;
 import com.cenit.battleship.model.Ship;
 import com.cenit.battleship.model.enums.Direction;
@@ -20,6 +21,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import com.cenit.battleship.model.GameConfiguration;
+import com.cenit.battleship.model.PlayerProfile;
 import java.util.Random;
 import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
@@ -68,21 +70,37 @@ public class PlacementViewController implements Initializable {
     private Button btnBeging;
     @FXML
     private Label lblInstructions;
+
+    @FXML
+    private Label lblMessage;
     @FXML
     private HBox mainContainer;
     @FXML
     private ComboBox<String> comboDifficulty;
 
     private Button[][] boardButtons;
-    private final GameConfiguration config = GameConfiguration.getInstance();
+    private GameConfiguration config;
     private Pane overlayLayer;
+    private PlayerProfile currentProfile;
+     
+    
+    
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
+        
+         // Inicializar variables
+        this.placedShips = new ArrayList<>(); // Asegurar que esté inicializada
+        this.config = GameConfiguration.getInstance();
+        // Crear o cargar el perfil del jugador
+        initializePlayerProfile();
 
         //establecer el tamaño de lasceldas
         config.setCellSize(40);
         boardButtons = new Button[config.getBoardSize()][config.getBoardSize()];
+
+        
+       
 
         initializeShips();
         initializeBoard();
@@ -179,6 +197,33 @@ public class PlacementViewController implements Initializable {
         System.out.println("✅ Tablero forzado a: " + totalSize + "x" + totalSize + "px");
     }
 
+    /**
+     * Inicializa el perfil del jugador (versión simplificada sin
+     * ProfileManager)
+     */
+    private void initializePlayerProfile() {
+        try {
+            // Obtener el nombre del jugador de la configuración
+            String playerName = config.getPlayerName();
+
+            // Crear nuevo perfil
+            currentProfile = new PlayerProfile(playerName);
+
+            // Establecer valores iniciales
+            //   currentProfile.setGamesPlayed(0);
+            //   currentProfile.setGamesWon(0);
+            currentProfile.setTotalScore(0);
+
+            System.out.println("✅ Perfil del jugador inicializado: " + playerName);
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al inicializar perfil del jugador: " + e.getMessage());
+            // Fallback: crear perfil con nombre por defecto
+            currentProfile = new PlayerProfile("Jugador");
+            System.out.println("🔄 Usando perfil por defecto: Jugador");
+        }
+    }
+
     private void setupOverlay() {
         overlayLayer = new Pane();
         overlayLayer.setMouseTransparent(true);
@@ -226,6 +271,253 @@ public class PlacementViewController implements Initializable {
             }
         });
     }
+    
+    
+     /**
+     * Obtiene el GameController actual o crea uno nuevo
+     */
+    private GameController getGameController() {
+        if (this.gameController == null) {
+            System.out.println("🔄 GameController es null, creando uno nuevo...");
+            this.gameController = createGameController();
+        }
+        return this.gameController;
+    }
+    
+    /**
+     * Crea un nuevo GameController con la configuración actual
+     */
+    private GameController createGameController() {
+        try {
+            System.out.println("🎮 Creando nuevo GameController...");
+            
+            // Validar que hay barcos colocados
+            if (placedShips == null || placedShips.isEmpty()) {
+                System.err.println("❌ ERROR: No hay barcos colocados");
+                showMessage("Error: Debes colocar todos los barcos antes de iniciar");
+                return null;
+            }
+            
+            // Crear GameController con perfil y dificultad
+            GameController newController = new GameController(currentProfile, config.getCpuDifficulty());
+            
+            // Crear tablero del jugador desde la colocación
+            Board playerBoard = createBoardFromPlacement();
+            if (playerBoard == null) {
+                System.err.println("❌ ERROR: No se pudo crear el tablero del jugador");
+                return null;
+            }
+            
+            // Configurar el GameController
+            newController.setPlayerBoard(playerBoard);
+            newController.setPlayerShips(new ArrayList<>(placedShips));
+            
+            // Inicializar el juego
+            newController.initializeGame();
+            
+            // Validar que se creó correctamente
+            if (validateGameController(newController)) {
+                System.out.println("✅ GameController creado exitosamente");
+                return newController;
+            } else {
+                System.err.println("❌ GameController no válido después de la creación");
+                return null;
+            }
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR CRÍTICO al crear GameController: " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Crea el tablero del jugador a partir de los barcos colocados
+     */
+    private Board createBoardFromPlacement() {
+        try {
+            System.out.println("🔄 Creando tablero desde " + placedShips.size() + " barcos colocados...");
+            
+            Board board = new Board(config.getBoardSize());
+            
+            if (placedShips.isEmpty()) {
+                System.err.println("❌ No hay barcos colocados");
+                return null;
+            }
+            
+            // Colocar cada barco en el tablero
+            for (Ship ship : placedShips) {
+                if (ship == null) {
+                    System.err.println("⚠️  Barco nulo encontrado en placedShips");
+                    continue;
+                }
+                
+                List<Coordinate> segments = ship.getSegments();
+                if (segments == null || segments.isEmpty()) {
+                    System.err.println("⚠️  Barco " + ship.getType().getName() + " sin segmentos");
+                    continue;
+                }
+                
+                try {
+                    // Verificar que se puede colocar
+                    if (board.canPlaceShip(segments)) {
+                        board.placeShip(ship, segments);
+                        System.out.println("✅ " + ship.getType().getName() + " colocado en el tablero");
+                    } else {
+                        System.err.println("❌ No se puede colocar " + ship.getType().getName());
+                        return null;
+                    }
+                } catch (Exception e) {
+                    System.err.println("❌ Error al colocar " + ship.getType().getName() + ": " + e.getMessage());
+                    return null;
+                }
+            }
+            
+            System.out.println("✅ Tablero del jugador creado con " + placedShips.size() + " barcos");
+            return board;
+            
+        } catch (Exception e) {
+            System.err.println("❌ ERROR en createBoardFromPlacement(): " + e.getMessage());
+            e.printStackTrace();
+            return null;
+        }
+    }
+    
+    /**
+     * Valida que el GameController esté correctamente configurado
+     */
+    private boolean validateGameController(GameController gameController) {
+        if (gameController == null) {
+            System.err.println("❌ GameController es null");
+            return false;
+        }
+        
+        if (gameController.getPlayerBoard() == null) {
+            System.err.println("❌ PlayerBoard es null");
+            return false;
+        }
+        
+        if (gameController.getCpuBoard() == null) {
+            System.err.println("❌ CpuBoard es null");
+            return false;
+        }
+        
+        if (gameController.getPlayerShips().isEmpty()) {
+            System.err.println("❌ PlayerShips está vacío");
+            return false;
+        }
+        
+        if (gameController.getCpuShips().isEmpty()) {
+            System.err.println("❌ CpuShips está vacío");
+            return false;
+        }
+        
+        System.out.println("✅ GameController validado correctamente");
+        return true;
+    }
+    
+    /**
+     * Método startGame corregido
+     */
+    private void startGame() {
+    System.out.println("? Iniciando juego con " + placedShips.size() + " barcos colocados");
+
+    try {
+        // Obtener el GameController actual
+        GameController gameController = getGameController();
+
+        if (gameController == null) {
+            System.err.println("❌ ERROR: GameController es null en startGame()");
+            showMessage("Error: No se pudo inicializar el juego");
+            return;
+        }
+
+        System.out.println("✅ GameController obtenido: " + (gameController != null));
+
+        // Configurar el GameController antes de cambiar de vista
+        GameViewController.setGameController(gameController);
+
+        System.out.println("🔄 Cambiando a GameView...");
+        App.changeView("/com/cenit/battleship/view/GameView.fxml");
+
+    } catch (Exception e) {
+        System.err.println("❌ ERROR CRÍTICO en startGame(): " + e.getMessage());
+        e.printStackTrace();
+        showMessage("Error al iniciar el juego: " + e.getMessage());
+    }
+}
+
+
+
+    
+    
+    // ========== MÉTODOS PARA GESTIONAR placedShips ==========
+    
+    /**
+     * Agrega un barco a la lista de barcos colocados
+     */
+    public void addPlacedShip(Ship ship) {
+        if (placedShips == null) {
+            placedShips = new ArrayList<>();
+        }
+        
+        if (ship != null && !placedShips.contains(ship)) {
+            placedShips.add(ship);
+            System.out.println("✅ Barco agregado a placedShips: " + ship.getType().getName());
+        }
+    }
+    
+    /**
+     * Elimina un barco de la lista de barcos colocados
+     */
+    public void removePlacedShip(Ship ship) {
+        if (placedShips != null && ship != null) {
+            placedShips.remove(ship);
+            System.out.println("🗑️ Barco removido de placedShips: " + ship.getType().getName());
+        }
+    }
+    
+    /**
+     * Obtiene la lista de barcos colocados
+     */
+    public List<Ship> getPlacedShips() {
+        if (placedShips == null) {
+            placedShips = new ArrayList<>();
+        }
+        return new ArrayList<>(placedShips);
+    }
+    
+    /**
+     * Verifica si todos los barcos necesarios han sido colocados
+     */
+    public boolean areAllShipsPlaced() {
+        if (placedShips == null) {
+            return false;
+        }
+        
+        // Define cuántos barcos se necesitan (ajusta según tu juego)
+        int requiredShips = 5; // Por ejemplo: Carrier, Battleship, Cruiser, Submarine, Destroyer
+        
+        boolean allPlaced = placedShips.size() >= requiredShips;
+        System.out.println("📊 Barcos colocados: " + placedShips.size() + "/" + requiredShips);
+        
+        return allPlaced;
+    }
+    
+    /**
+     * Reinicia la colocación de barcos
+     */
+    public void resetPlacement() {
+        if (placedShips != null) {
+            placedShips.clear();
+            System.out.println("🔄 Colocación de barcos reiniciada");
+        }
+        
+        if (gameController != null) {
+            gameController = null;
+            System.out.println("🔄 GameController reiniciado");
+        }
+    }
 
     private void updateOverlayPosition() {
         if (overlayLayer == null || boardPlayer == null) {
@@ -253,7 +545,7 @@ public class PlacementViewController implements Initializable {
     private void ConfigureEvents() {
         btnRotate.setOnAction(e -> rotateShip());
         btnAleatory.setOnAction(e -> placeRandomShips());
-        btnBeging.setOnAction(e -> StartGame());
+        btnBeging.setOnAction(e -> startGame());
     }
 
     // onAction button
@@ -372,61 +664,88 @@ public class PlacementViewController implements Initializable {
      * Versión mejorada de canPlaceShip con mejor logging
      */
     private boolean canPlaceShip(int startX, int startY, Direction direction, int size) {
-    // Calcular coordenadas
-    List<Coordinate> coordinates = calculateShipCoordinates(startX, startY, direction, size);
-    
-    // Verificar que el barco quepa en el tablero
-    if (coordinates.isEmpty()) {
-        return false;
-    }
-    
-    // Verificar límites
-    for (Coordinate coord : coordinates) {
-        if (coord.getX() < 0 || coord.getX() >= config.getBoardSize() ||
-            coord.getY() < 0 || coord.getY() >= config.getBoardSize()) {
+        // Calcular coordenadas
+        List<Coordinate> coordinates = calculateShipCoordinates(startX, startY, direction, size);
+
+        // Verificar que el barco quepa en el tablero
+        if (coordinates.isEmpty()) {
             return false;
         }
-    }
-    
-    // Verificar superposición y proximidad
-    for (Ship placedShip : placedShips) {
-        for (Coordinate placedCoord : placedShip.getSegments()) {
-            // Verificar superposición
-            for (Coordinate newCoord : coordinates) {
-                if (placedCoord.equals(newCoord)) {
-                    return false;
-                }
+
+        // Verificar límites
+        for (Coordinate coord : coordinates) {
+            if (coord.getX() < 0 || coord.getX() >= config.getBoardSize()
+                    || coord.getY() < 0 || coord.getY() >= config.getBoardSize()) {
+                return false;
             }
-            
-            // Verificar adyacencia
-            for (Coordinate newCoord : coordinates) {
-                int diffX = Math.abs(placedCoord.getX() - newCoord.getX());
-                int diffY = Math.abs(placedCoord.getY() - newCoord.getY());
-                if (diffX <= 1 && diffY <= 1) {
-                    return false;
+        }
+
+        // Verificar superposición y proximidad
+        for (Ship placedShip : placedShips) {
+            for (Coordinate placedCoord : placedShip.getSegments()) {
+                // Verificar superposición
+                for (Coordinate newCoord : coordinates) {
+                    if (placedCoord.equals(newCoord)) {
+                        return false;
+                    }
+                }
+
+                // Verificar adyacencia
+                for (Coordinate newCoord : coordinates) {
+                    int diffX = Math.abs(placedCoord.getX() - newCoord.getX());
+                    int diffY = Math.abs(placedCoord.getY() - newCoord.getY());
+                    if (diffX <= 1 && diffY <= 1) {
+                        return false;
+                    }
                 }
             }
         }
+
+        return true;
     }
+
     
-    return true;
-}
 
-    private void StartGame() {
-        try {
-            // Validar que todos los barcos estén colocados
-            if (placedShips.size() < shipToPlacement.size() + placedShips.size()) {
-                System.out.println("? Error: No todos los barcos han sido colocados");
-                return;
-            }
-
-            System.out.println("? Iniciando juego con " + placedShips.size() + " barcos colocados");
-            App.changeView("com/cenit/battleship/view/GameView");
-        } catch (IOException ex) {
-            System.err.println("? Error al cambiar a GameView: " + ex.getMessage());
-            ex.printStackTrace();
+    /**
+     * Realiza una validación final antes de iniciar el juego
+     */
+    private boolean performFinalValidation(GameController gameController) {
+        if (gameController == null) {
+            return false;
         }
+
+        // Verificar barcos del jugador
+        if (gameController.getPlayerShips().isEmpty()) {
+            System.err.println("❌ El jugador no tiene barcos");
+            return false;
+        }
+
+        // Verificar barcos de la CPU
+        if (gameController.getCpuShips().isEmpty()) {
+            System.err.println("❌ La CPU no tiene barcos");
+            return false;
+        }
+
+        // Verificar tableros
+        if (gameController.getPlayerBoard() == null) {
+            System.err.println("❌ Tablero del jugador es null");
+            return false;
+        }
+
+        if (gameController.getCpuBoard() == null) {
+            System.err.println("❌ Tablero de la CPU es null");
+            return false;
+        }
+
+        System.out.println("✅ Validación final exitosa");
+        return true;
     }
+
+    
+
+    
+
+    
 
     private List<Coordinate> calculateShipCoordinates(int startX, int startY, Direction direction, int size) {
         List<Coordinate> coordinates = new ArrayList<>();
@@ -999,6 +1318,44 @@ public class PlacementViewController implements Initializable {
         if (lblInstructions != null) {
             lblInstructions.setText("Coloca tus barcos - Dificultad: " + difficulty);
         }
+    }
+
+    private void showMessage(String message) {
+        // Asegurarse de que se ejecuta en el hilo de JavaFX
+        Platform.runLater(() -> {
+            try {
+                if (lblMessage != null) {
+                    lblMessage.setText(message);
+
+                    // Aplicar estilo según el tipo de mensaje
+                    if (message.toLowerCase().contains("error")
+                            || message.toLowerCase().contains("crítico")
+                            || message.toLowerCase().contains("fallo")) {
+                        // Mensaje de error - estilo rojo
+                        lblMessage.getStyleClass().removeAll("mensaje-normal", "mensaje-especial", "mensaje-info");
+                        lblMessage.getStyleClass().add("mensaje-error");
+                    } else if (message.toLowerCase().contains("éxito")
+                            || message.toLowerCase().contains("correcto")
+                            || message.toLowerCase().contains("victoria")) {
+                        // Mensaje de éxito - estilo verde
+                        lblMessage.getStyleClass().removeAll("mensaje-normal", "mensaje-error", "mensaje-info");
+                        lblMessage.getStyleClass().add("mensaje-especial");
+                    } else {
+                        // Mensaje normal - estilo por defecto
+                        lblMessage.getStyleClass().removeAll("mensaje-error", "mensaje-especial", "mensaje-info");
+                        lblMessage.getStyleClass().add("mensaje-normal");
+                    }
+                }
+
+                // También imprimir en consola para debugging
+                System.out.println("📢 PlacementView: " + message);
+
+            } catch (Exception e) {
+                System.err.println("❌ Error al mostrar mensaje: " + e.getMessage());
+                // Fallback: imprimir en consola
+                System.out.println("📢 [FALLBACK] " + message);
+            }
+        });
     }
 
     private void showAlert(String titulo, String mensaje) {
