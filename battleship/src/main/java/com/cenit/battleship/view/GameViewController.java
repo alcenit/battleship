@@ -527,7 +527,7 @@ public class GameViewController implements Initializable {
             if (response == ButtonType.OK) {
                 try {
                     soundController.stopBackgroundMusic();
-                    App.changeView("view/MainView");
+                    App.changeView("com/cenit/battleship/view/MainView");
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -1030,7 +1030,7 @@ public class GameViewController implements Initializable {
     private void resetGame() {
         try {
             soundController.stopBackgroundMusic();
-            App.changeView("/com/battleship/view/MainView.fxml");
+            App.changeView("/com/cenit/battleship/view/MainView.fxml");
         } catch (Exception ex) {
             ex.printStackTrace();
         }

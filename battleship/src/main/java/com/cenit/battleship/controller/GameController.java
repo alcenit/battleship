@@ -13,6 +13,7 @@ import com.cenit.battleship.model.SkillResult;
 import com.cenit.battleship.model.SkillSystem;
 import com.cenit.battleship.model.enums.Difficulty;
 import com.cenit.battleship.model.enums.Direction;
+import com.cenit.battleship.model.enums.FleetConfiguration;
 import com.cenit.battleship.model.enums.GamePhase;
 import com.cenit.battleship.model.enums.ShipType;
 import com.cenit.battleship.model.enums.ShotResult;
@@ -59,6 +60,15 @@ public class GameController {
     private Player cpuPlayer;
     private PlayerProfile currentProfile;
 
+    private PlayerProfile playerProfile;
+
+    private List<Ship> playerFleet;
+    private List<Ship> cpuFleet;
+
+    private SkillSystem cpuSkills;
+    private int timeLimitMinutes; // 0 = sin límite de tiempo
+    private boolean isTimeLimited;
+
     // ========== CONSTRUCTORES ==========
     public GameController(PlayerProfile profile, Difficulty difficulty) {
         this.currentProfile = profile;
@@ -103,7 +113,6 @@ public class GameController {
     }
 
     // ========== INICIALIZACIÓN ==========
-    // ========== MÉTODOS DE INICIALIZACIÓN FALTANTES ==========
     /**
      * Inicializa el juego - Método que falta en tu código actual
      */
@@ -198,8 +207,6 @@ public class GameController {
     public void setPlayerShips(List<Ship> playerShips) {
         this.playerShips = new ArrayList<>(playerShips);
     }
-    
-    
 
     private void setupSkillsByDifficulty() {
         playerSkills.reset();
@@ -750,27 +757,6 @@ public class GameController {
         } catch (Exception e) {
             System.err.println("❌ Error al establecer flota para ambos jugadores: " + e.getMessage());
             throw new RuntimeException("No se pudo configurar las flotas", e);
-        }
-    }
-
-    /**
-     * Crea una copia independiente de una flota
-     */
-    private List<Ship> createFleetCopy(List<Ship> originalFleet) {
-        List<Ship> copy = new ArrayList<>();
-        for (Ship originalShip : originalFleet) {
-            Ship newShip = new Ship(originalShip.getType());
-            copy.add(newShip);
-        }
-        return copy;
-    }
-
-    /**
-     * Reinicia el estado de todos los barcos en una flota
-     */
-    private void resetShipsState(List<Ship> ships) {
-        for (Ship ship : ships) {
-            ship.reset();
         }
     }
 
@@ -1407,6 +1393,222 @@ public class GameController {
                 ship = new Ship(ShipType.CRUISER);
         }
         return ship;
+    }
+
+    // ========== MÉTODOS DE CONFIGURACIÓN DE FLOTA Y TIEMPO ==========
+    /**
+     * Establece la flota para el jugador humano
+     *
+     * @param ships Lista de barcos para la flota del jugador
+     */
+    public void setFleet(List<Ship> ships) {
+        if (ships == null || ships.isEmpty()) {
+            throw new IllegalArgumentException("La flota no puede ser nula o vacía");
+        }
+
+        try {
+            // Validar la flota antes de asignarla
+            validateFleet(ships, "Jugador");
+
+            // Crear copia independiente
+            List<Ship> playerFleetCopy = createFleetCopy(ships);
+
+            // Limpiar flota existente
+            this.playerShips.clear();
+
+            // Asignar nueva flota
+            this.playerShips.addAll(playerFleetCopy);
+
+            // Reiniciar estado de los barcos
+            resetShipsState(this.playerShips);
+
+            System.out.println("🚢 Flota del jugador establecida: " + playerShips.size() + " barcos");
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al establecer flota del jugador: " + e.getMessage());
+            throw new RuntimeException("No se pudo configurar la flota del jugador", e);
+        }
+    }
+
+    /**
+     * Establece la flota usando una configuración específica
+     *
+     * @param fleetConfig Configuración de flota predefinida
+     */
+    public void setFleet(FleetConfiguration fleetConfig) {
+        if (fleetConfig == null) {
+            throw new IllegalArgumentException("La configuración de flota no puede ser nula");
+        }
+
+        setFleet(fleetConfig.getShips());
+    }
+
+    /**
+     * Establece la flota para la CPU
+     *
+     * @param ships Lista de barcos para la flota de la CPU
+     */
+    public void setCpuFleet(List<Ship> ships) {
+        if (ships == null || ships.isEmpty()) {
+            throw new IllegalArgumentException("La flota de la CPU no puede ser nula o vacía");
+        }
+
+        try {
+            // Validar la flota antes de asignarla
+            validateFleet(ships, "CPU");
+
+            // Crear copia independiente
+            List<Ship> cpuFleetCopy = createFleetCopy(ships);
+
+            // Limpiar flota existente
+            this.CPUShips.clear();
+
+            // Asignar nueva flota
+            this.CPUShips.addAll(cpuFleetCopy);
+
+            // Reiniciar estado de los barcos
+            resetShipsState(this.CPUShips);
+
+            // Colocar barcos de la CPU automáticamente
+            if (cpuPlayer instanceof CPU) {
+                ((CPU) cpuPlayer).placeShipsRandomly();
+            }
+
+            System.out.println("🤖 Flota de CPU establecida: " + CPUShips.size() + " barcos");
+
+        } catch (Exception e) {
+            System.err.println("❌ Error al establecer flota de la CPU: " + e.getMessage());
+            throw new RuntimeException("No se pudo configurar la flota de la CPU", e);
+        }
+    }
+
+    /**
+     * Establece el límite de tiempo para la partida
+     *
+     * @param minutes Límite de tiempo en minutos (0 = sin límite)
+     */
+    public void setTimeLimit(int minutes) {
+        if (minutes < 0) {
+            throw new IllegalArgumentException("El límite de tiempo no puede ser negativo");
+        }
+
+        this.timeLimitMinutes = minutes;
+        this.isTimeLimited = (minutes > 0);
+
+        if (isTimeLimited) {
+            System.out.println("⏰ Límite de tiempo establecido: " + minutes + " minutos");
+
+            // Inicializar temporizador si es necesario
+            initializeGameTimer();
+        } else {
+            System.out.println("⏰ Modo sin límite de tiempo");
+        }
+    }
+
+    /**
+     * Verifica si el tiempo se ha agotado
+     *
+     * @param elapsedMinutes Tiempo transcurrido en minutos
+     * @return true si el tiempo se agotó
+     */
+    public boolean isTimeUp(int elapsedMinutes) {
+        return isTimeLimited && elapsedMinutes >= timeLimitMinutes;
+    }
+
+    /**
+     * Obtiene el tiempo restante en minutos
+     *
+     * @param elapsedMinutes Tiempo transcurrido en minutos
+     * @return Tiempo restante en minutos (0 si no hay límite o tiempo agotado)
+     */
+    public int getRemainingTime(int elapsedMinutes) {
+        if (!isTimeLimited) {
+            return 0; // 0 indica que no hay límite de tiempo
+        }
+
+        int remaining = timeLimitMinutes - elapsedMinutes;
+        return Math.max(0, remaining);
+    }
+
+    /**
+     * Inicializa el temporizador del juego si hay límite de tiempo
+     */
+    private void initializeGameTimer() {
+        if (!isTimeLimited) {
+            return;
+        }
+
+        // Aquí puedes implementar la lógica del temporizador
+        // Por ejemplo, usando un ScheduledExecutorService o JavaFX Timeline
+        System.out.println("⏱️  Temporizador inicializado para " + timeLimitMinutes + " minutos");
+    }
+
+// ========== MÉTODOS AUXILIARES MEJORADOS ==========
+    /**
+     * Crea una copia independiente de una flota (versión mejorada)
+     */
+    private List<Ship> createFleetCopy(List<Ship> originalFleet) {
+        List<Ship> copy = new ArrayList<>();
+        for (Ship originalShip : originalFleet) {
+            try {
+                Ship newShip = new Ship(originalShip.getType());
+
+                // Copiar propiedades adicionales si existen
+                if (originalShip.isPlaced()) {
+                    // Si el barco original estaba colocado, crear uno nuevo sin colocar
+                    newShip.reset();
+                }
+
+                copy.add(newShip);
+            } catch (Exception e) {
+                System.err.println("⚠️ Error al copiar barco de tipo "
+                        + originalShip.getType().getName() + ": " + e.getMessage());
+                // Continuar con el siguiente barco
+            }
+        }
+        return copy;
+    }
+
+    /**
+     * Reinicia el estado de todos los barcos en una flota (versión mejorada)
+     */
+    private void resetShipsState(List<Ship> ships) {
+        for (Ship ship : ships) {
+            try {
+                ship.reset();
+                // Asegurar que el barco esté listo para ser colocado
+                if (ship.isPlaced()) {
+                    System.out.println("🔄 Reiniciando barco " + ship.getType().getName() + " que ya estaba colocado");
+                }
+            } catch (Exception e) {
+                System.err.println("⚠️ Error al reiniciar barco " + ship.getType().getName() + ": " + e.getMessage());
+            }
+        }
+    }
+
+// ========== GETTERS PARA NUEVOS CAMPOS ==========
+    /**
+     * Obtiene el límite de tiempo en minutos
+     */
+    public int getTimeLimitMinutes() {
+        return timeLimitMinutes;
+    }
+
+    /**
+     * Verifica si el juego tiene límite de tiempo
+     */
+    public boolean isTimeLimited() {
+        return isTimeLimited;
+    }
+
+    /**
+     * Obtiene el tiempo transcurrido en minutos (para usar con los métodos de
+     * tiempo)
+     */
+    public int getElapsedTimeMinutes() {
+        // Esta es una implementación básica - puedes mejorarla según tu lógica de tiempo
+        // Por ejemplo, podrías tener un campo que trackee el tiempo real
+        return elapsedTurns; // Usando turnos como aproximación
     }
 
     // ========== MÉTODOS DE CONFIGURACIÓN DE HABILIDADES ==========

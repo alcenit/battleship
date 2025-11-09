@@ -52,6 +52,7 @@ com\cenit\battleship\util\Helpers.class
 com\cenit\battleship\model\enums\Achievement$AchievementRarity.class
 com\cenit\battleship\model\SkillResult.class
 com\cenit\battleship\view\PlacementViewController.class
+com\cenit\battleship\model\enums\FleetConfiguration.class
 com\cenit\battleship\model\ShipState.class
 com\cenit\battleship\model\PlayerProfile.class
 com\cenit\battleship\model\GameConfiguration.class
@@ -73,6 +74,7 @@ com\cenit\battleship\services\dto\ShipDTO.class
 com\cenit\battleship\services\PersistenceStrategy.class
 com\cenit\battleship\controller\AnimationController.class
 com\cenit\battleship\services\dto\GameStateDTO.class
+com\cenit\battleship\view\MainViewController$1.class
 com\cenit\battleship\services\GameService.class
 com\cenit\battleship\view\SavedViewController$SaveGameListener.class
 com\cenit\battleship\PrimaryController.class
@@ -80,6 +82,7 @@ com\cenit\battleship\model\Skill.class
 com\cenit\battleship\controller\CPUController.class
 com\cenit\battleship\services\dto\SkillDTO.class
 com\cenit\battleship\SecondaryController.class
+com\cenit\battleship\model\enums\GameMode.class
 com\cenit\battleship\view\components\ShipRenderer.class
 com\cenit\battleship\controller\CPUController$1.class
 com\cenit\battleship\view\MainViewController.class

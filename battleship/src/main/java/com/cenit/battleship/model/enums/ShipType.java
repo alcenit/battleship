@@ -9,7 +9,9 @@ public enum ShipType {
     SUBMARINE(1, "SUBMARINO"),
     DESTROYER(2, "DESTRUCTOR"),
     CRUISER(3, "CRUCERO"),
-    FRIGATE(4, "FRAGATA");
+    FRIGATE(4, "FRAGATA"),
+    SCOUT(1,"ESPECIAL");
+    
 
     private final int size;
     private final String name;

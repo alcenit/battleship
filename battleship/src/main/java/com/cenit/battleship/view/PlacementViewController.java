@@ -204,7 +204,7 @@ public class PlacementViewController implements Initializable {
     private void initializePlayerProfile() {
         try {
             // Obtener el nombre del jugador de la configuración
-            String playerName = config.getPlayerName();
+            playerName = config.getPlayerName();
 
             // Crear nuevo perfil
             currentProfile = new PlayerProfile(playerName);

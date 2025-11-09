@@ -4,19 +4,16 @@ import com.cenit.battleship.App;
 import com.cenit.battleship.controller.GameController;
 import com.cenit.battleship.model.GameConfiguration;
 import com.cenit.battleship.model.PlayerProfile;
-import com.cenit.battleship.model.Ship;
 import com.cenit.battleship.model.Skill;
 import com.cenit.battleship.model.SkillSystem;
 import com.cenit.battleship.model.enums.Difficulty;
-import com.cenit.battleship.model.enums.ShipType;
+import com.cenit.battleship.model.enums.FleetConfiguration;
+import com.cenit.battleship.model.enums.GameMode;
 import com.cenit.battleship.services.ProfileService;
 import com.cenit.battleship.services.StorageService;
 import java.io.IOException;
 import java.net.URL;
-import java.util.Arrays;
 import java.util.Date;
-import java.util.List;
-import java.util.Optional;
 import java.util.ResourceBundle;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
@@ -87,6 +84,12 @@ public class MainViewController implements Initializable {
                 "Experto"
         );
         comboDifficulty.setValue("Normal");
+        
+         comboModeGame.getItems().clear();
+        GameMode.getAllModes().forEach(mode -> 
+            comboModeGame.getItems().add(mode.getName())
+        );
+        comboModeGame.setValue(GameMode.CLASSIC.getName());
 
         // CARGAR NOMBRE EXISTENTE SI EXISTE
         String savedName = GameConfiguration.getInstance().getPlayerName();
@@ -121,6 +124,68 @@ public class MainViewController implements Initializable {
             validatePlayerNameInRealTime(newValue);
         });
     }
+    private GameController createAndConfigureGame(String gameModeName, Difficulty difficulty) {
+        System.out.println("🎯 Configurando juego - Modo: " + gameModeName + ", Dificultad: " + difficulty.getDisplayName());
+        
+        // Obtener el modo de juego desde la clase GameMode
+        GameMode selectedMode = GameMode.getByName(gameModeName);
+        
+        // Crea un perfil por defecto para el jugador
+        PlayerProfile defaultProfile = new PlayerProfile("Jugador");
+        GameController controller = new GameController(defaultProfile, difficulty);
+        controller.setDifficulty(difficulty);
+        
+        // Aplicar configuraciones del modo usando la nueva clase
+        applyGameModeConfigurations(controller, selectedMode);
+        
+        System.out.println("✅ Juego configurado exitosamente - Modo: " + selectedMode.getName()
+                + ", Dificultad: " + difficulty.getDisplayName());
+        return controller;
+    }
+    
+    private void applyGameModeConfigurations(GameController controller, GameMode gameMode) {
+    System.out.println("🎮 Configurando modo: " + gameMode.getName());
+    
+    // Configurar puntos de habilidad según el modo
+    SkillSystem skills = controller.getPlayerSkills();
+    skills.reset();
+    skills.setSkillPoints(gameMode.getSkillPoints());
+    
+    // Configurar habilidades disponibles
+    gameMode.getAvailableSkills().forEach(skill -> 
+        skills.addSkill(skill, getDefaultSkillLevel(skill))
+    );
+    
+    // Configurar flota según el modo (¡más simple!)
+    controller.setFleet(gameMode.getFleetConfig());
+    
+    // Configurar límite de tiempo si aplica
+    if (gameMode.isTimeLimited()) {
+        controller.setTimeLimit(gameMode.getTimeLimitMinutes());
+    }
+    
+    // Mostrar información de configuración
+    System.out.println(controller.getFleetInfo());
+}
+
+private int getDefaultSkillLevel(Skill skill) {
+    // Puedes personalizar los niveles iniciales por habilidad
+    switch (skill) {
+        case SONAR: return 2;
+        case RADAR: return 1;
+        case DRONE: return 1;
+        case GUIDED_MISSILE: return 1;
+        case CLUSTER_BOMB: return 1;
+        case JAMMING: return 1;
+        case REPAIR: return 1;
+        default: return 1;
+    }
+}
+    
+    
+    
+      
+    
 
     @FXML
     private void startNewGame(ActionEvent event) {
@@ -263,7 +328,7 @@ public class MainViewController implements Initializable {
             GameConfiguration config = GameConfiguration.getInstance();
 
             // Cargar modo de juego guardado
-            String savedMode = config.getGameMode();
+            String savedMode = config.getGameMode().toString();
             if (savedMode != null && comboModeGame.getItems().contains(savedMode)) {
                 comboModeGame.setValue(savedMode);
             }
@@ -340,37 +405,9 @@ public class MainViewController implements Initializable {
         }
     }
 
-    private void saveCurrentSettings(String gameMode, Difficulty difficulty) {
-        try {
-            GameConfiguration config = GameConfiguration.getInstance();
-            config.setGameMode(gameMode);
-            config.setCpuDifficulty(difficulty);
-            config.saveConfiguration();
-            System.out.println("💾 Configuraciones guardadas: Modo=" + gameMode + ", Dificultad=" + difficulty);
-        } catch (Exception e) {
-            System.err.println("⚠️ Error guardando configuraciones: " + e.getMessage());
-        }
-    }
+    
 
-    private GameController createAndConfigureGame(String gameMode, Difficulty difficulty) {
-        System.out.println("🎯 Configurando juego - Modo: " + gameMode + ", Dificultad: " + difficulty.getDisplayName());
-
-        // Crea un perfil por defecto para el jugador
-        PlayerProfile defaultProfile = new PlayerProfile("Jugador");
-        GameController controller = new GameController(defaultProfile, difficulty);
-
-        controller.setDifficulty(difficulty);
-
-        // Aplicar configuraciones específicas del modo
-        applyGameModeConfigurations(controller, gameMode);
-
-        // Configurar flota según el modo
-        setupGameFleet(controller, gameMode);
-
-        System.out.println("✅ Juego configurado exitosamente - Modo: " + gameMode
-                + ", Dificultad: " + difficulty.getDisplayName());
-        return controller;
-    }
+    
 
     private void setupPlayerProfile(GameController gameController, String playerName, String gameMode, Difficulty difficulty) {
         try {
@@ -446,111 +483,10 @@ public class MainViewController implements Initializable {
         }
     }
 
-    private void setupGameFleet(GameController controller, String gameMode) {
-        switch (gameMode) {
-            case "Flota Especial":
-                controller.setSpecialFleet();
-                break;
-            case "Táctico":
-                controller.setTacticalFleet();
-                break;
-            case "Asimétrico":
-                controller.setAsymmetricFleet();
-                break;
-            case "Relámpago":
-                controller.setMinimalFleet();
-                break;
-            case "Enjambre":
-                controller.setSwarmFleet();
-                break;
-            default:
-                controller.setStandardFleet();
-        }
+    
 
-        // Mostrar información de la flota configurada
-        System.out.println(controller.getFleetInfo());
-
-        // Verificar balance (solo informativo)
-        if (!controller.areFleetsBalanced()) {
-            System.out.println("⚠️  Las flotas no están balanceadas - Modo de juego desafiante");
-        }
-    }
-
-    private void applyGameModeConfigurations(GameController controller, String gameMode) {
-        System.out.println("🎮 Configurando modo: " + gameMode);
-
-        switch (gameMode) {
-            case "Flota Especial" ->
-                configureSpecialFleetMode(controller);
-            case "Táctico" ->
-                configureTacticalMode(controller);
-            case "Asimétrico" ->
-                configureAsymmetricMode(controller);
-            case "Relámpago" ->
-                configureLightningMode(controller);
-            case "Enjambre" ->
-                configureSwarmMode(controller);
-            default ->
-                configureClassicMode(controller);
-        }
-    }
-
-    private void configureClassicMode(GameController controller) {
-        // Configuración clásica estándar
-        SkillSystem skills = controller.getPlayerSkills();
-        skills.reset();
-        skills.addSkill(Skill.SONAR, 2);
-        skills.addSkill(Skill.RADAR, 1);
-        skills.setSkillPoints(4);
-    }
-
-    private void configureSpecialFleetMode(GameController controller) {
-        SkillSystem skills = controller.getPlayerSkills();
-        skills.reset();
-        skills.addSkill(Skill.SONAR, 3);
-        skills.addSkill(Skill.RADAR, 2);
-        skills.addSkill(Skill.DRONE, 2);
-        skills.setSkillPoints(6);
-    }
-
-    private void configureTacticalMode(GameController controller) {
-        SkillSystem skills = controller.getPlayerSkills();
-        skills.reset();
-        skills.addSkill(Skill.SONAR, 2);
-        skills.addSkill(Skill.RADAR, 2);
-        skills.addSkill(Skill.DRONE, 2);
-        skills.addSkill(Skill.GUIDED_MISSILE, 1);
-        skills.addSkill(Skill.CLUSTER_BOMB, 1);
-        skills.setSkillPoints(8);
-    }
-
-    private void configureAsymmetricMode(GameController controller) {
-        SkillSystem skills = controller.getPlayerSkills();
-        skills.reset();
-        skills.addSkill(Skill.SONAR, 3);
-        skills.addSkill(Skill.JAMMING, 2);
-        skills.addSkill(Skill.REPAIR, 3);
-        skills.addSkill(Skill.CLUSTER_BOMB, 2);
-        skills.setSkillPoints(7);
-    }
-
-    private void configureLightningMode(GameController controller) {
-        SkillSystem skills = controller.getPlayerSkills();
-        skills.reset();
-        skills.addSkill(Skill.GUIDED_MISSILE, 3);
-        skills.addSkill(Skill.CLUSTER_BOMB, 3);
-        skills.addSkill(Skill.DRONE, 1);
-        skills.setSkillPoints(6);
-    }
-
-    private void configureSwarmMode(GameController controller) {
-        SkillSystem skills = controller.getPlayerSkills();
-        skills.reset();
-        skills.addSkill(Skill.SONAR, 4);
-        skills.addSkill(Skill.RADAR, 3);
-        skills.addSkill(Skill.DRONE, 3);
-        skills.setSkillPoints(8);
-    }
+  
+    
 
     private void handleStartGameError(Exception ex) {
         System.err.println("💥 Error crítico al iniciar juego: " + ex.getMessage());
@@ -582,7 +518,7 @@ public class MainViewController implements Initializable {
 
     private void openConfiguration() {
         try {
-            App.changeView("view/ConfigurationView");
+            App.changeView("/com/cenit/battleship/view/ConfigurationView.fxml");
         } catch (Exception ex) {
             ex.printStackTrace();
             showAlert("Error", "No se pudo abrir la configuración: " + ex.getMessage());

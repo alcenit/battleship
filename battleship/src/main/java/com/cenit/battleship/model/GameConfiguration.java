@@ -1,6 +1,7 @@
 package com.cenit.battleship.model;
 
 import com.cenit.battleship.model.enums.Difficulty;
+import com.cenit.battleship.model.enums.GameMode;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -24,13 +25,12 @@ public class GameConfiguration {
     private double soundVolume;
     private double gameSpeed;
     private String playerName;
-    private String gameMode;
+    private GameMode gameMode;
     private boolean showHelp;
     private String visualTheme;
     private String language;
     private int boardSize;
     private int cellSize;
-    
     
     // Archivo de configuración
     private static final String CONFIG_FILE = "config.properties";
@@ -42,16 +42,17 @@ public class GameConfiguration {
     private static final boolean DEFAULT_ANIMATIONS = true;
     private static final double DEFAULT_VOLUME = 0.8;
     private static final double DEFAULT_SPEED = 1.0;
-    private static final String DEFAULT_NAME = "Jugador";
-    private static final String DEFAULT_GAME_MODE = "Clásico";
+    private static final String DEFAULT_NAME = "Almirante";
+    private static final GameMode DEFAULT_GAME_MODE = GameMode.CLASSIC; // Corregido
     private static final boolean DEFAULT_HELP = true;
     private static final String DEFAULT_THEME = "default";
     private static final String DEFAULT_LANGUAGE = "es";
-    // --- VALORES POR DEFECTO PARA EL TABLERO ---
+    
+    // Valores por defecto para el tablero
     public static final int DEFAULT_BOARD_SIZE = 15;
     public static final int DEFAULT_CELL_SIZE = 40;
     
-    public GameConfiguration() {
+    private GameConfiguration() {
         loadConfiguration();
     }
     
@@ -107,20 +108,23 @@ public class GameConfiguration {
             this.gameSpeed = Double.parseDouble(properties.getProperty("gameSpeed", "1.0"));
             
             // Jugador
-            this.playerName = properties.getProperty("playerName", "Jugador");
-            this.gameMode = properties.getProperty("gameMode", "Clásico");
+            this.playerName = properties.getProperty("playerName", DEFAULT_NAME);
+            
+            // Modo de juego - Corregido
+            String gameModeStr = properties.getProperty("gameMode", "CLASSIC");
+            this.gameMode = GameMode.getByName(gameModeStr);
+            
             this.showHelp = Boolean.parseBoolean(properties.getProperty("showHelp", "true"));
             
             // Interfaz
             this.visualTheme = properties.getProperty("visualTheme", "default");
             this.language = properties.getProperty("language", "es");
             
-            // ---  TABLERO ---
+            // Tablero
             this.boardSize = Integer.parseInt(properties.getProperty("boardSize", String.valueOf(DEFAULT_BOARD_SIZE)));
             this.cellSize = Integer.parseInt(properties.getProperty("cellSize", String.valueOf(DEFAULT_CELL_SIZE)));
             
-            
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             System.err.println("❌ Error al parsear configuración: " + e.getMessage());
             useDefaultValues();
         }
@@ -129,7 +133,7 @@ public class GameConfiguration {
     private void saveToProperties() {
         // Dificultad y modo de juego
         properties.setProperty("cpuDifficulty", cpuDifficulty.name());
-        properties.setProperty("gameMode", gameMode);
+        properties.setProperty("gameMode", gameMode.getName()); // Usar getName() en lugar de toString()
         
         // Sonido
         properties.setProperty("soundEnabled", String.valueOf(soundEnabled));
@@ -147,7 +151,7 @@ public class GameConfiguration {
         properties.setProperty("visualTheme", visualTheme);
         properties.setProperty("language", language);
         
-        // ---  GUARDADOS DEL TABLERO ---
+        // Tablero
         properties.setProperty("boardSize", String.valueOf(this.boardSize));
         properties.setProperty("cellSize", String.valueOf(this.cellSize));
     }
@@ -163,7 +167,6 @@ public class GameConfiguration {
         this.showHelp = DEFAULT_HELP;
         this.visualTheme = DEFAULT_THEME;
         this.language = DEFAULT_LANGUAGE;
-        
         this.boardSize = DEFAULT_BOARD_SIZE;
         this.cellSize = DEFAULT_CELL_SIZE;
     }
@@ -177,14 +180,14 @@ public class GameConfiguration {
     /**
      * Establece un nuevo tamaño para el tablero.
      * Debe usarse con precaución, ya que afecta a toda la lógica del juego.
-     * @param size .
+     * @param size Tamaño del tablero
      */
     public void setBoardSize(int size) {
         if (size > 0 && size <= 30) { // Poner un límite razonable
             this.boardSize = size;
             System.out.println("📐 Tamaño del tablero establecido a: " + size + "x" + size);
         } else {
-            System.err.println("⚠️ Tamaño de tablero inválido: " + size + ". Debe estar entre 1 y 20.");
+            System.err.println("⚠️ Tamaño de tablero inválido: " + size + ". Debe estar entre 1 y 30.");
         }
     }
 
@@ -204,7 +207,6 @@ public class GameConfiguration {
             System.err.println("⚠️ Tamaño de casilla inválido: " + size + ". Debe estar entre 10 y 100.");
         }
     }
-
     
     public Difficulty getCpuDifficulty() {
         return cpuDifficulty;
@@ -262,14 +264,14 @@ public class GameConfiguration {
         }
     }
     
-    public String getGameMode() {
+    public GameMode getGameMode() {
         return gameMode;
     }
     
-    public void setGameMode(String mode) {
-        if (mode != null && !mode.trim().isEmpty()) {
-            this.gameMode = mode.trim();
-            System.out.println("🎮 Modo de juego: " + gameMode);
+    public void setGameMode(GameMode gameMode) {
+        if (gameMode != null) {
+            this.gameMode = gameMode;
+            System.out.println("🎮 Modo de juego: " + gameMode.getName());
         }
     }
     
@@ -350,10 +352,12 @@ public class GameConfiguration {
         System.out.println("🎬 Animaciones: " + (animationsEnabled ? "HABILITADAS" : "DESHABILITADAS"));
         System.out.println("⚡ Velocidad: " + (int)(gameSpeed * 100) + "%");
         System.out.println("👤 Jugador: " + playerName);
-        System.out.println("🎮 Modo: " + gameMode);
+        System.out.println("🎮 Modo: " + (gameMode != null ? gameMode.getName() : "No establecido"));
         System.out.println("💡 Ayudas: " + (showHelp ? "HABILITADAS" : "DESHABILITADAS"));
         System.out.println("🎨 Tema: " + visualTheme);
         System.out.println("🌐 Idioma: " + language);
+        System.out.println("📐 Tamaño tablero: " + boardSize + "x" + boardSize);
+        System.out.println("📏 Tamaño casilla: " + cellSize + "px");
         System.out.println("=============================");
     }
     
@@ -365,6 +369,7 @@ public class GameConfiguration {
         this.showHelp = true;
         this.gameSpeed = 0.8;
         this.soundVolume = 0.7;
+        this.gameMode = GameMode.CLASSIC;
         saveConfiguration();
         System.out.println("✅ Modo Principiante configurado");
     }
@@ -375,6 +380,7 @@ public class GameConfiguration {
         this.showHelp = true;
         this.gameSpeed = 1.0;
         this.soundVolume = 0.8;
+        this.gameMode = GameMode.CLASSIC;
         saveConfiguration();
         System.out.println("✅ Modo Normal configurado");
     }
@@ -385,6 +391,7 @@ public class GameConfiguration {
         this.showHelp = false;
         this.gameSpeed = 1.2;
         this.soundVolume = 0.9;
+        this.gameMode = GameMode.TACTICAL;
         saveConfiguration();
         System.out.println("✅ Modo Difícil configurado");
     }
@@ -395,6 +402,7 @@ public class GameConfiguration {
         this.showHelp = false;
         this.gameSpeed = 1.5;
         this.soundVolume = 1.0;
+        this.gameMode = GameMode.TACTICAL;
         saveConfiguration();
         System.out.println("✅ Modo Experto configurado");
     }
@@ -406,6 +414,7 @@ public class GameConfiguration {
         this.animationsEnabled = true;
         this.gameSpeed = 1.0;
         this.soundVolume = 0.9;
+        this.gameMode = GameMode.TACTICAL;
         saveConfiguration();
         System.out.println("✅ Modo Competitivo configurado");
     }
@@ -417,6 +426,7 @@ public class GameConfiguration {
         this.animationsEnabled = true;
         this.gameSpeed = 0.9;
         this.soundVolume = 0.6;
+        this.gameMode = GameMode.CLASSIC;
         saveConfiguration();
         System.out.println("✅ Modo Casual configurado");
     }
@@ -469,8 +479,10 @@ public class GameConfiguration {
     public Properties getGameSettings() {
         Properties gameProps = new Properties();
         gameProps.setProperty("cpuDifficulty", cpuDifficulty.name());
-        gameProps.setProperty("gameMode", gameMode);
+        gameProps.setProperty("gameMode", gameMode.getName());
         gameProps.setProperty("playerName", playerName);
+        gameProps.setProperty("boardSize", String.valueOf(boardSize));
+        gameProps.setProperty("cellSize", String.valueOf(cellSize));
         return gameProps;
     }
     
@@ -487,7 +499,18 @@ public class GameConfiguration {
             if (importedProps.containsKey("soundVolume")) {
                 this.soundVolume = Double.parseDouble(importedProps.getProperty("soundVolume"));
             }
-            // ... importar otras propiedades
+            if (importedProps.containsKey("gameMode")) {
+                this.gameMode = GameMode.getByName(importedProps.getProperty("gameMode"));
+            }
+            if (importedProps.containsKey("playerName")) {
+                this.playerName = importedProps.getProperty("playerName");
+            }
+            if (importedProps.containsKey("boardSize")) {
+                this.boardSize = Integer.parseInt(importedProps.getProperty("boardSize"));
+            }
+            if (importedProps.containsKey("cellSize")) {
+                this.cellSize = Integer.parseInt(importedProps.getProperty("cellSize"));
+            }
             
             saveConfiguration();
             System.out.println("✅ Configuración importada exitosamente");
@@ -503,7 +526,24 @@ public class GameConfiguration {
         exportProps.putAll(properties);
         return exportProps;
     }
+    
+    // ========== MÉTODOS PARA COMPATIBILIDAD CON CÓDIGO EXISTENTE ==========
+    
+    /**
+     * Método para compatibilidad con código existente que usa String para gameMode
+     * @deprecated Usar setGameMode(GameMode) en su lugar
+     */
+    @Deprecated
+    public void setGameMode(String gameModeName) {
+        this.gameMode = GameMode.getByName(gameModeName);
+    }
+    
+    /**
+     * Método para compatibilidad con código existente
+     * @deprecated Usar getGameMode() en su lugar
+     */
+    @Deprecated
+    public String getGameModeName() {
+        return gameMode != null ? gameMode.getName() : "Clásico";
+    }
 }
-    
-    
-

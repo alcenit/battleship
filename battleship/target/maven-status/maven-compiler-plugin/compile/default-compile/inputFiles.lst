@@ -25,6 +25,7 @@ C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\ba
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\SecondaryController.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\Cell.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\SaveGameInfo.java
+C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\enums\GameMode.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\Board.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\services\PersistenceStrategy.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\view\MainViewController.java
@@ -44,6 +45,7 @@ C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\ba
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\services\ProfileService.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\AchievementTracker.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\enums\CellState.java
+C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\enums\FleetConfiguration.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\PrimaryController.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\model\Player.java
 C:\Users\Usuario\Documents\JAVA\battleship\battleship\src\main\java\com\cenit\battleship\view\SavedViewController.java
