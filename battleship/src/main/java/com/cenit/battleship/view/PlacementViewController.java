@@ -22,6 +22,7 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import com.cenit.battleship.model.GameConfiguration;
 import com.cenit.battleship.model.PlayerProfile;
+import com.cenit.battleship.view.components.BoardRenderer;
 import java.util.Random;
 import javafx.scene.Parent;
 import javafx.scene.layout.Pane;
@@ -58,6 +59,8 @@ public class PlacementViewController implements Initializable {
     private List<Coordinate> currentHighlight = new ArrayList<>();
     private boolean isValidPlacement = false;
 
+    private BoardRenderer boardRenderer;
+
     @FXML
     private GridPane boardPlayer;
     @FXML
@@ -82,25 +85,21 @@ public class PlacementViewController implements Initializable {
     private GameConfiguration config;
     private Pane overlayLayer;
     private PlayerProfile currentProfile;
-     
-    
-    
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        
-         // Inicializar variables
+
+        // Inicializar variables
         this.placedShips = new ArrayList<>(); // Asegurar que esté inicializada
         this.config = GameConfiguration.getInstance();
+        this.boardRenderer = new BoardRenderer();
+        
         // Crear o cargar el perfil del jugador
         initializePlayerProfile();
 
         //establecer el tamaño de lasceldas
         config.setCellSize(40);
         boardButtons = new Button[config.getBoardSize()][config.getBoardSize()];
-
-        
-       
 
         initializeShips();
         initializeBoard();
@@ -165,38 +164,123 @@ public class PlacementViewController implements Initializable {
     }
 
     private void initializeBoard() {
-        int boardSize = config.getBoardSize();
-        int cellSize = config.getCellSize(); // Esto es 40
+    try {
+        System.out.println("🎯 Inicializando tablero con BoardRenderer...");
+        boardRenderer.initializeBoard(boardPlayer, boardButtons, true, this::handleBoardClick);
+        System.out.println("✅ Tablero inicializado correctamente");
+    } catch (Exception e) {
+        System.err.println("❌ Error inicializando tablero: " + e.getMessage());
+        e.printStackTrace();
+        // Fallback: inicialización manual
+        initializeBoardManual();
+    }
+}
 
-        System.out.println("? Tamaño de casilla establecido a: " + cellSize + "px");
+// Método de fallback por si BoardRenderer falla
+private void initializeBoardManual() {
+    int boardSize = config.getBoardSize();
+    int cellSize = config.getCellSize();
 
-        // ✅ SOLUCIÓN: FORZAR TAMAÑO DEL GRIDPANE
-        int totalSize = boardSize * cellSize; // 15 * 40 = 600px
-        boardPlayer.setPrefSize(totalSize, totalSize);
-        boardPlayer.setMinSize(totalSize, totalSize);
-        boardPlayer.setMaxSize(totalSize, totalSize);
+    System.out.println("🔄 Usando inicialización manual - Tamaño: " + cellSize + "px");
 
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                Button button = new Button();
-                button.setPrefSize(cellSize, cellSize); // 40x40
-                button.getStyleClass().add("casilla-vacia");
+    int totalSize = boardSize * cellSize;
+    boardPlayer.setPrefSize(totalSize, totalSize);
+    boardPlayer.setMinSize(totalSize, totalSize);
+    boardPlayer.setMaxSize(totalSize, totalSize);
 
-                final int x = i;
-                final int y = j;
+    for (int i = 0; i < boardSize; i++) {
+        for (int j = 0; j < boardSize; j++) {
+            Button button = new Button();
+            button.setPrefSize(cellSize, cellSize);
+            button.getStyleClass().add("casilla-vacia");
 
-                button.setOnMouseClicked(e -> handleBoardClick(x, y));
-                button.setOnMouseEntered(e -> highlightPosition(x, y));
-                button.setOnMouseExited(e -> clearHighlight());
+            final int x = i;
+            final int y = j;
 
-                boardPlayer.add(button, j, i);
-                boardButtons[i][j] = button;
-            }
+            button.setOnMouseClicked(e -> handleBoardClick(x, y));
+            button.setOnMouseEntered(e -> highlightPosition(x, y));
+            button.setOnMouseExited(e -> clearHighlight());
+
+            boardPlayer.add(button, j, i);
+            boardButtons[i][j] = button;
         }
-
-        System.out.println("✅ Tablero forzado a: " + totalSize + "x" + totalSize + "px");
     }
 
+    System.out.println("✅ Tablero manual inicializado: " + totalSize + "x" + totalSize + "px");
+}
+
+    private void updateBoardVisuals() {
+    try {
+        Board tempBoard = createBoardFromPlacement();
+        if (tempBoard != null) {
+            boardRenderer.updateBoardDisplay(boardButtons, tempBoard, true, true);
+            System.out.println("✅ Visualización del tablero actualizada");
+        }
+    } catch (Exception e) {
+        System.err.println("❌ Error actualizando visualización: " + e.getMessage());
+        // Continuar sin actualizar la visualización del BoardRenderer
+    }
+    
+    
+}
+    /**
+     * Limpia el aspecto visual del tablero
+     */
+    private void clearBoardVisuals() {
+    try {
+        if (boardRenderer != null) {
+            // Usar BoardRenderer si está disponible
+            Board tempBoard = new Board(config.getBoardSize());
+            boardRenderer.updateBoardDisplay(boardButtons, tempBoard, true, true);
+        } else {
+            // Fallback manual
+            int boardSize = config.getBoardSize();
+            for (int i = 0; i < boardSize; i++) {
+                for (int j = 0; j < boardSize; j++) {
+                    Button button = boardButtons[i][j];
+                    button.getStyleClass().removeAll("casilla-barco", "casilla-bloqueada");
+                    button.getStyleClass().add("casilla-vacia");
+                    button.setText("");
+                }
+            }
+        }
+    } catch (Exception e) {
+        System.err.println("❌ Error limpiando tablero: " + e.getMessage());
+    }
+}
+
+//    private void initializeBoard() {
+//        int boardSize = config.getBoardSize();
+//        int cellSize = config.getCellSize(); // Esto es 40
+//
+//        System.out.println("? Tamaño de casilla establecido a: " + cellSize + "px");
+//
+//        // ✅ SOLUCIÓN: FORZAR TAMAÑO DEL GRIDPANE
+//        int totalSize = boardSize * cellSize; // 15 * 40 = 600px
+//        boardPlayer.setPrefSize(totalSize, totalSize);
+//        boardPlayer.setMinSize(totalSize, totalSize);
+//        boardPlayer.setMaxSize(totalSize, totalSize);
+//
+//        for (int i = 0; i < boardSize; i++) {
+//            for (int j = 0; j < boardSize; j++) {
+//                Button button = new Button();
+//                button.setPrefSize(cellSize, cellSize); // 40x40
+//                button.getStyleClass().add("casilla-vacia");
+//
+//                final int x = i;
+//                final int y = j;
+//
+//                button.setOnMouseClicked(e -> handleBoardClick(x, y));
+//                button.setOnMouseEntered(e -> highlightPosition(x, y));
+//                button.setOnMouseExited(e -> clearHighlight());
+//
+//                boardPlayer.add(button, j, i);
+//                boardButtons[i][j] = button;
+//            }
+//        }
+//
+//        System.out.println("✅ Tablero forzado a: " + totalSize + "x" + totalSize + "px");
+//    }
     /**
      * Inicializa el perfil del jugador (versión simplificada sin
      * ProfileManager)
@@ -271,9 +355,8 @@ public class PlacementViewController implements Initializable {
             }
         });
     }
-    
-    
-     /**
+
+    /**
      * Obtiene el GameController actual o crea uno nuevo
      */
     private GameController getGameController() {
@@ -283,38 +366,38 @@ public class PlacementViewController implements Initializable {
         }
         return this.gameController;
     }
-    
+
     /**
      * Crea un nuevo GameController con la configuración actual
      */
     private GameController createGameController() {
         try {
             System.out.println("🎮 Creando nuevo GameController...");
-            
+
             // Validar que hay barcos colocados
             if (placedShips == null || placedShips.isEmpty()) {
                 System.err.println("❌ ERROR: No hay barcos colocados");
                 showMessage("Error: Debes colocar todos los barcos antes de iniciar");
                 return null;
             }
-            
+
             // Crear GameController con perfil y dificultad
             GameController newController = new GameController(currentProfile, config.getCpuDifficulty());
-            
+
             // Crear tablero del jugador desde la colocación
             Board playerBoard = createBoardFromPlacement();
             if (playerBoard == null) {
                 System.err.println("❌ ERROR: No se pudo crear el tablero del jugador");
                 return null;
             }
-            
+
             // Configurar el GameController
             newController.setPlayerBoard(playerBoard);
             newController.setPlayerShips(new ArrayList<>(placedShips));
-            
+
             // Inicializar el juego
             newController.initializeGame();
-            
+
             // Validar que se creó correctamente
             if (validateGameController(newController)) {
                 System.out.println("✅ GameController creado exitosamente");
@@ -323,41 +406,41 @@ public class PlacementViewController implements Initializable {
                 System.err.println("❌ GameController no válido después de la creación");
                 return null;
             }
-            
+
         } catch (Exception e) {
             System.err.println("❌ ERROR CRÍTICO al crear GameController: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
     }
-    
+
     /**
      * Crea el tablero del jugador a partir de los barcos colocados
      */
     private Board createBoardFromPlacement() {
         try {
             System.out.println("🔄 Creando tablero desde " + placedShips.size() + " barcos colocados...");
-            
+
             Board board = new Board(config.getBoardSize());
-            
+
             if (placedShips.isEmpty()) {
                 System.err.println("❌ No hay barcos colocados");
                 return null;
             }
-            
+
             // Colocar cada barco en el tablero
             for (Ship ship : placedShips) {
                 if (ship == null) {
                     System.err.println("⚠️  Barco nulo encontrado en placedShips");
                     continue;
                 }
-                
+
                 List<Coordinate> segments = ship.getSegments();
                 if (segments == null || segments.isEmpty()) {
                     System.err.println("⚠️  Barco " + ship.getType().getName() + " sin segmentos");
                     continue;
                 }
-                
+
                 try {
                     // Verificar que se puede colocar
                     if (board.canPlaceShip(segments)) {
@@ -372,17 +455,17 @@ public class PlacementViewController implements Initializable {
                     return null;
                 }
             }
-            
+
             System.out.println("✅ Tablero del jugador creado con " + placedShips.size() + " barcos");
             return board;
-            
+
         } catch (Exception e) {
             System.err.println("❌ ERROR en createBoardFromPlacement(): " + e.getMessage());
             e.printStackTrace();
             return null;
         }
     }
-    
+
     /**
      * Valida que el GameController esté correctamente configurado
      */
@@ -391,68 +474,109 @@ public class PlacementViewController implements Initializable {
             System.err.println("❌ GameController es null");
             return false;
         }
-        
+
         if (gameController.getPlayerBoard() == null) {
             System.err.println("❌ PlayerBoard es null");
             return false;
         }
-        
+
         if (gameController.getCpuBoard() == null) {
             System.err.println("❌ CpuBoard es null");
             return false;
         }
-        
+
         if (gameController.getPlayerShips().isEmpty()) {
             System.err.println("❌ PlayerShips está vacío");
             return false;
         }
-        
+
         if (gameController.getCpuShips().isEmpty()) {
             System.err.println("❌ CpuShips está vacío");
             return false;
         }
-        
+
         System.out.println("✅ GameController validado correctamente");
         return true;
     }
     
-    /**
-     * Método startGame corregido
-     */
-    private void startGame() {
-    System.out.println("? Iniciando juego con " + placedShips.size() + " barcos colocados");
+    //EVENTOS DE BOTONES 
+    private void ConfigureEvents() {
+        btnRotate.setOnAction(e -> rotateShip());
+        btnAleatory.setOnAction(e -> placeRandomShips());
+        btnBeging.setOnAction(e -> startGame());
+    }
 
-    try {
-        // Obtener el GameController actual
-        GameController gameController = getGameController();
+    // onAction button
+    private void rotateShip() {
+        actualDirection = (actualDirection == Direction.HORIZONTAL) ? Direction.VERTICAL : Direction.HORIZONTAL;
+        btnRotate.setText(actualDirection == Direction.VERTICAL ? "Horizontal" : "Vertical");
 
-        if (gameController == null) {
-            System.err.println("❌ ERROR: GameController es null en startGame()");
-            showMessage("Error: No se pudo inicializar el juego");
-            return;
+        // Recalcular highlight si hay una posición activa
+        if (!currentHighlight.isEmpty() && selectShip != null) {
+            Coordinate firstCoord = currentHighlight.get(0);
+            highlightPosition(firstCoord.getX(), firstCoord.getY());
         }
 
-        System.out.println("✅ GameController obtenido: " + (gameController != null));
+        updateInstructions();
+    }
 
-        // Configurar el GameController antes de cambiar de vista
-        GameViewController.setGameController(gameController);
+    // onAction button
+    private void placeRandomShips() {
+    System.out.println("🎲 Colocando barcos aleatoriamente...");
 
-        System.out.println("🔄 Cambiando a GameView...");
-        App.changeView("/com/cenit/battleship/view/GameView.fxml");
+    try {
+        clearAllShips();
+        List<Ship> shipsToPlace = new ArrayList<>(shipToPlacement);
+
+        for (Ship ship : shipsToPlace) {
+            placeSingleShipRandomly(ship);
+        }
+
+        updateInterface();
+        updateShipGraphics();
+        updateBoardVisuals(); // ✅ Actualizar BoardRenderer después de colocación aleatoria
+        btnBeging.setDisable(shipToPlacement.isEmpty());
+
+        System.out.println("✅ Colocación aleatoria completada");
 
     } catch (Exception e) {
-        System.err.println("❌ ERROR CRÍTICO en startGame(): " + e.getMessage());
-        e.printStackTrace();
-        showMessage("Error al iniciar el juego: " + e.getMessage());
+        System.err.println("❌ Error en colocación aleatoria: " + e.getMessage());
     }
 }
-
-
-
     
-    
+
+    /**
+     * Método startGame 
+     */
+    private void startGame() {
+        System.out.println("? Iniciando juego con " + placedShips.size() + " barcos colocados");
+
+        try {
+            // Obtener el GameController actual
+            GameController gameController = getGameController();
+
+            if (gameController == null) {
+                System.err.println("❌ ERROR: GameController es null en startGame()");
+                showMessage("Error: No se pudo inicializar el juego");
+                return;
+            }
+
+            System.out.println("✅ GameController obtenido: " + (gameController != null));
+
+            // Configurar el GameController antes de cambiar de vista
+            GameViewController.setGameController(gameController);
+
+            System.out.println("🔄 Cambiando a GameView...");
+            App.changeView("/com/cenit/battleship/view/GameView.fxml");
+
+        } catch (Exception e) {
+            System.err.println("❌ ERROR CRÍTICO en startGame(): " + e.getMessage());
+            e.printStackTrace();
+            showMessage("Error al iniciar el juego: " + e.getMessage());
+        }
+    }
+
     // ========== MÉTODOS PARA GESTIONAR placedShips ==========
-    
     /**
      * Agrega un barco a la lista de barcos colocados
      */
@@ -460,13 +584,13 @@ public class PlacementViewController implements Initializable {
         if (placedShips == null) {
             placedShips = new ArrayList<>();
         }
-        
+
         if (ship != null && !placedShips.contains(ship)) {
             placedShips.add(ship);
             System.out.println("✅ Barco agregado a placedShips: " + ship.getType().getName());
         }
     }
-    
+
     /**
      * Elimina un barco de la lista de barcos colocados
      */
@@ -476,7 +600,7 @@ public class PlacementViewController implements Initializable {
             System.out.println("🗑️ Barco removido de placedShips: " + ship.getType().getName());
         }
     }
-    
+
     /**
      * Obtiene la lista de barcos colocados
      */
@@ -486,7 +610,7 @@ public class PlacementViewController implements Initializable {
         }
         return new ArrayList<>(placedShips);
     }
-    
+
     /**
      * Verifica si todos los barcos necesarios han sido colocados
      */
@@ -494,16 +618,16 @@ public class PlacementViewController implements Initializable {
         if (placedShips == null) {
             return false;
         }
-        
+
         // Define cuántos barcos se necesitan (ajusta según tu juego)
         int requiredShips = 5; // Por ejemplo: Carrier, Battleship, Cruiser, Submarine, Destroyer
-        
+
         boolean allPlaced = placedShips.size() >= requiredShips;
         System.out.println("📊 Barcos colocados: " + placedShips.size() + "/" + requiredShips);
-        
+
         return allPlaced;
     }
-    
+
     /**
      * Reinicia la colocación de barcos
      */
@@ -512,7 +636,7 @@ public class PlacementViewController implements Initializable {
             placedShips.clear();
             System.out.println("🔄 Colocación de barcos reiniciada");
         }
-        
+
         if (gameController != null) {
             gameController = null;
             System.out.println("🔄 GameController reiniciado");
@@ -541,51 +665,7 @@ public class PlacementViewController implements Initializable {
         }
     }
 
-    //EVENTOS DE BOTONES 
-    private void ConfigureEvents() {
-        btnRotate.setOnAction(e -> rotateShip());
-        btnAleatory.setOnAction(e -> placeRandomShips());
-        btnBeging.setOnAction(e -> startGame());
-    }
-
-    // onAction button
-    private void rotateShip() {
-        actualDirection = (actualDirection == Direction.HORIZONTAL) ? Direction.VERTICAL : Direction.HORIZONTAL;
-        btnRotate.setText(actualDirection == Direction.VERTICAL ? "Horizontal" : "Vertical");
-
-        // Recalcular highlight si hay una posición activa
-        if (!currentHighlight.isEmpty() && selectShip != null) {
-            Coordinate firstCoord = currentHighlight.get(0);
-            highlightPosition(firstCoord.getX(), firstCoord.getY());
-        }
-
-        updateInstructions();
-    }
-
-    // onAction button
-    private void placeRandomShips() {
-        System.out.println("? Colocando barcos aleatoriamente...");
-
-        try {
-            clearAllShips();
-
-            // Trabajar con copia de la lista
-            List<Ship> shipsToPlace = new ArrayList<>(shipToPlacement);
-
-            for (Ship ship : shipsToPlace) {
-                placeSingleShipRandomly(ship);
-            }
-
-            updateInterface();
-            updateShipGraphics();
-            btnBeging.setDisable(shipToPlacement.isEmpty());
-
-            System.out.println("✅ Colocación aleatoria completada");
-
-        } catch (Exception e) {
-            System.err.println("❌ Error: " + e.getMessage());
-        }
-    }
+    
 
     /**
      * Limpia todos los barcos colocados
@@ -606,20 +686,8 @@ public class PlacementViewController implements Initializable {
         clearBoardVisuals();
     }
 
-    /**
-     * Limpia el aspecto visual del tablero
-     */
-    private void clearBoardVisuals() {
-        int boardSize = config.getBoardSize();
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                Button button = boardButtons[i][j];
-                button.getStyleClass().removeAll("casilla-barco", "casilla-bloqueada");
-                button.getStyleClass().add("casilla-vacia");
-                button.setText("");
-            }
-        }
-    }
+    
+    
 
     /**
      * Coloca un solo barco en posición aleatoria
@@ -704,8 +772,6 @@ public class PlacementViewController implements Initializable {
         return true;
     }
 
-    
-
     /**
      * Realiza una validación final antes de iniciar el juego
      */
@@ -740,12 +806,6 @@ public class PlacementViewController implements Initializable {
         System.out.println("✅ Validación final exitosa");
         return true;
     }
-
-    
-
-    
-
-    
 
     private List<Coordinate> calculateShipCoordinates(int startX, int startY, Direction direction, int size) {
         List<Coordinate> coordinates = new ArrayList<>();
@@ -825,6 +885,7 @@ public class PlacementViewController implements Initializable {
 
                     updateInterface();
                     updateShipGraphics();
+                    updateBoardVisuals();
                 }
             } else {
                 System.out.println("? No se puede colocar el barco en " + getCoordinateName(x, y));
@@ -1251,49 +1312,7 @@ public class PlacementViewController implements Initializable {
         btnBeging.setDisable(!shipToPlacement.isEmpty());
     }
 
-    private boolean prepareNextView(Stage currentStage, GameController gameController, String gameMode, String playerName) {
-        try {
-            // Verificar que el controlador esté listo
-            if (!gameController.areFleetsReady()) {
-                showAlert("Error de Configuración", "Las flotas no están listas. No se puede iniciar el juego.");
-                return false;
-            }
-
-            // Cargar el FXML y obtener el controlador
-            FXMLLoader loader = new FXMLLoader(getClass().getResource("/com/cenit/battleship/view/PlacementView.fxml"));
-            Parent root = loader.load();
-
-            PlacementViewController placementController = loader.getController();
-            if (placementController == null) {
-                showAlert("Error", "No se pudo cargar el controlador de colocación.");
-                return false;
-            }
-
-            // Configurar usando métodos de instancia
-            placementController.setGameController(gameController);
-            placementController.setGameMode(gameMode);
-            placementController.setPlayerName(playerName);
-            placementController.setDifficulty(comboDifficulty.getValue()); // Pasar dificultad
-
-            // Crear una nueva escena con el contenido cargado
-            Scene placementScene = new Scene(root);
-
-            // Asignar la nueva escena a la ventana actual
-            currentStage.setScene(placementScene);
-            currentStage.setTitle("Coloca tus barcos - Dificultad: " + comboDifficulty.getValue());
-
-            // Opcional: Ajustar el tamaño de la ventana al nuevo contenido
-            currentStage.sizeToScene();
-
-            System.out.println("✅ Vista de colocación preparada y mostrada exitosamente");
-            return true;
-
-        } catch (IOException e) {
-            System.err.println("❌ Error al preparar vista: " + e.getMessage());
-            showAlert("Error", "No se pudo preparar la vista del juego: " + e.getMessage());
-            return false;
-        }
-    }
+    
 
     // Getters y Setters estáticos para la configuración
     public static void setGameMode(String mode) {

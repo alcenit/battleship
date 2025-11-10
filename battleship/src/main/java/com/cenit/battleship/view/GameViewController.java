@@ -15,6 +15,7 @@ import com.cenit.battleship.model.GameConfiguration;
 import com.cenit.battleship.model.PlayerProfile;
 import com.cenit.battleship.model.enums.Direction;
 import com.cenit.battleship.services.StorageService;
+import com.cenit.battleship.view.components.BoardRenderer;
 import com.cenit.battleship.view.components.ShipRenderer;
 import static com.cenit.battleship.view.components.ShipRenderer.renderShipCorrected;
 import java.net.URL;
@@ -50,6 +51,9 @@ import javafx.util.Duration;
 public class GameViewController implements Initializable {
 
     private static GameController gameControllerStatic;
+    
+    private BoardRenderer boardRenderer;
+    
 
     private GameController gameController;
     private StorageService storageService;
@@ -201,8 +205,8 @@ public class GameViewController implements Initializable {
             updateTurnStatus();
 
             // Actualizar los tableros
-            updateBoardDisplay(playerBoardButtons, false);
-            updateBoardDisplay(cpuBoardButtons, true);
+            updateBoardDisplays();
+            updateBoardDisplays();
 
             // Actualizar paneles de información
             updateInformationPanels();
@@ -235,66 +239,62 @@ public class GameViewController implements Initializable {
         }
     }
 
-    /**
-     * Método de debug para la inicialización
-     */
-    private void debugInitialization() {
-        System.out.println("=== DEBUG INITIALIZATION ===");
-        System.out.println("GameController: " + (gameController != null ? "OK" : "NULL"));
-        System.out.println("Player Board: " + (playerBoard != null ? "OK" : "NULL"));
-        System.out.println("CPU Board: " + (cpuBoard != null ? "OK" : "NULL"));
-        System.out.println("Board Size: " + config.getBoardSize());
-        System.out.println("Player Buttons: " + (playerBoardButtons != null ? playerBoardButtons.length + "x" + playerBoardButtons[0].length : "NULL"));
-        System.out.println("CPU Buttons: " + (cpuBoardButtons != null ? cpuBoardButtons.length + "x" + cpuBoardButtons[0].length : "NULL"));
-        System.out.println("============================");
+    
+
+     private void initializeInterface() {
+        this.boardRenderer = new BoardRenderer();
+        
+        // Tablero del jugador (no clickeable)
+        boardRenderer.initializeDisplayBoard(playerBoard, playerBoardButtons);
+        
+        // Tablero de la CPU (clickeable)
+        boardRenderer.initializePlayerBoard(cpuBoard, cpuBoardButtons, this::handlePlayerShot);
+    }
+    
+    private void updateBoardDisplays() {
+        // Actualizar tablero del jugador
+        boardRenderer.updateBoardDisplay(playerBoardButtons, gameController.getPlayerBoard(), true, false);
+        
+        // Actualizar tablero de la CPU
+        boardRenderer.updateBoardDisplay(cpuBoardButtons, gameController.getCpuBoard(), false, 
+                                       activeGame && gameController.isPlayerTurn());
     }
 
-    private void initializeInterface() {
-        System.out.println("DEBUG: Entrando en initializeInterface()");
-
-        initializeBoard(playerBoard, playerBoardButtons, false);
-        initializeBoard(cpuBoard, cpuBoardButtons, true);
-        updateInformationPanels();
-        updateSkills();
-        updateSkillPoints();
-        System.out.println("DEBUG: Saliendo de initializeInterface()");
-    }
-
-    private void initializeBoard(GridPane board, Button[][] buttons, boolean isClickable) {
-        System.out.println("DEBUG: Entrando en initializeBoard()");
-
-        board.getChildren().clear();
-
-        int boardSize = config.getBoardSize();
-        int cellSize = config.getCellSize(); // Usar 40x40 desde configuración
-
-        // Agregar labels de coordenadas
-        addLabelsCoordinates(board, boardSize);
-
-        for (int i = 0; i < boardSize; i++) {
-            for (int j = 0; j < boardSize; j++) {
-                Button button = new Button();
-                button.setPrefSize(cellSize, cellSize); // Usar tamaño de configuración
-                button.getStyleClass().add("casilla-agua");
-
-                final int x = i;
-                final int y = j;
-
-                if (isClickable) {
-                    button.setOnMouseClicked(e -> handlePlayerShot(x, y));
-                    button.setOnMouseEntered(e -> highlightCPUcell(x, y));
-                    button.setOnMouseExited(e -> clearCPUHighlight());
-                }
-
-                // Posicionar en grid (offset por labels)
-                board.add(button, j + 1, i + 1);
-                buttons[i][j] = button;
-            }
-        }
-
-        updateBoardDisplay(buttons, isClickable);
-        System.out.println("DEBUG: Saliendo de initializeBoard()");
-    }
+//    private void initializeBoard(GridPane board, Button[][] buttons, boolean isClickable) {
+//        System.out.println("DEBUG: Entrando en initializeBoard()");
+//
+//        board.getChildren().clear();
+//
+//        int boardSize = config.getBoardSize();
+//        int cellSize = config.getCellSize(); // Usar 40x40 desde configuración
+//
+//        // Agregar labels de coordenadas
+//        addLabelsCoordinates(board, boardSize);
+//
+//        for (int i = 0; i < boardSize; i++) {
+//            for (int j = 0; j < boardSize; j++) {
+//                Button button = new Button();
+//                button.setPrefSize(cellSize, cellSize); // Usar tamaño de configuración
+//                button.getStyleClass().add("casilla-agua");
+//
+//                final int x = i;
+//                final int y = j;
+//
+//                if (isClickable) {
+//                    button.setOnMouseClicked(e -> handlePlayerShot(x, y));
+//                    button.setOnMouseEntered(e -> highlightCPUcell(x, y));
+//                    button.setOnMouseExited(e -> clearCPUHighlight());
+//                }
+//
+//                // Posicionar en grid (offset por labels)
+//                board.add(button, j + 1, i + 1);
+//                buttons[i][j] = button;
+//            }
+//        }
+//
+//        updateBoardDisplay(buttons, isClickable);
+//        System.out.println("DEBUG: Saliendo de initializeBoard()");
+//    }
 
     private void addLabelsCoordinates(GridPane board, int boardSize) {
         // Letras (A-J) en la parte superior
@@ -1049,6 +1049,21 @@ public class GameViewController implements Initializable {
         }
 
         showDialogEndGame(playerWin);
+    }
+    
+    
+    /**
+     * Método de debug para la inicialización
+     */
+    private void debugInitialization() {
+        System.out.println("=== DEBUG INITIALIZATION ===");
+        System.out.println("GameController: " + (gameController != null ? "OK" : "NULL"));
+        System.out.println("Player Board: " + (playerBoard != null ? "OK" : "NULL"));
+        System.out.println("CPU Board: " + (cpuBoard != null ? "OK" : "NULL"));
+        System.out.println("Board Size: " + config.getBoardSize());
+        System.out.println("Player Buttons: " + (playerBoardButtons != null ? playerBoardButtons.length + "x" + playerBoardButtons[0].length : "NULL"));
+        System.out.println("CPU Buttons: " + (cpuBoardButtons != null ? cpuBoardButtons.length + "x" + cpuBoardButtons[0].length : "NULL"));
+        System.out.println("============================");
     }
 
     /**

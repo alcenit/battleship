@@ -7,7 +7,6 @@ import com.cenit.battleship.model.PlayerProfile;
 import com.cenit.battleship.model.Skill;
 import com.cenit.battleship.model.SkillSystem;
 import com.cenit.battleship.model.enums.Difficulty;
-import com.cenit.battleship.model.enums.FleetConfiguration;
 import com.cenit.battleship.model.enums.GameMode;
 import com.cenit.battleship.services.ProfileService;
 import com.cenit.battleship.services.StorageService;

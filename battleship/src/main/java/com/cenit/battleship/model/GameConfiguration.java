@@ -43,7 +43,7 @@ public class GameConfiguration {
     private static final double DEFAULT_VOLUME = 0.8;
     private static final double DEFAULT_SPEED = 1.0;
     private static final String DEFAULT_NAME = "Almirante";
-    private static final GameMode DEFAULT_GAME_MODE = GameMode.CLASSIC; // Corregido
+    private static final GameMode DEFAULT_GAME_MODE = GameMode.CLASSIC;
     private static final boolean DEFAULT_HELP = true;
     private static final String DEFAULT_THEME = "default";
     private static final String DEFAULT_LANGUAGE = "es";

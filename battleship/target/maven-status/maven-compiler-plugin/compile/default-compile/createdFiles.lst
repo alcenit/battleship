@@ -39,6 +39,7 @@ com\cenit\battleship\model\enums\Achievement$AchievementProgress.class
 com\cenit\battleship\model\CPU.class
 com\cenit\battleship\view\GameViewController$1.class
 com\cenit\battleship\model\GameStatistics.class
+com\cenit\battleship\view\components\BoardRenderer$BoardClickHandler.class
 com\cenit\battleship\view\components\ShipView.class
 com\cenit\battleship\services\GameStateMapper.class
 com\cenit\battleship\services\StorageService$SkillsState.class
@@ -62,6 +63,7 @@ com\cenit\battleship\model\Cell.class
 com\cenit\battleship\view\components\ShipRenderer$1.class
 com\cenit\battleship\view\SkillViewController.class
 com\cenit\battleship\model\enums\CellState.class
+com\cenit\battleship\view\components\BoardRenderer$1.class
 com\cenit\battleship\view\components\Cellview.class
 com\cenit\battleship\controller\GameController$1.class
 com\cenit\battleship\services\dto\CoordinateDTO.class
@@ -75,6 +77,7 @@ com\cenit\battleship\services\PersistenceStrategy.class
 com\cenit\battleship\controller\AnimationController.class
 com\cenit\battleship\services\dto\GameStateDTO.class
 com\cenit\battleship\view\MainViewController$1.class
+com\cenit\battleship\view\components\BoardRenderer.class
 com\cenit\battleship\services\GameService.class
 com\cenit\battleship\view\SavedViewController$SaveGameListener.class
 com\cenit\battleship\PrimaryController.class
